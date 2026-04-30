@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 600 900"
+     width="600" height="900"
+     fill="none"
+     role="img"
+     aria-label="Altex Agency">
+  <title>Altex Agency</title>
+
+  <!-- Transparent background by design (no <rect> fill) -->
+
+  <!-- ============================================================
+       MONOGRAM MARK
+       Geometric "A" with a thin orbital ring suggesting connectivity.
+       Centered horizontally; sits in the upper-middle of the canvas
+       to mirror the Tommy Martins card composition.
+       ============================================================ -->
+  <g transform="translate(300 380)">
+
+    <!-- Orbit ring (electric accent) -->
+    <ellipse cx="0" cy="10"
+             rx="150" ry="44"
+             transform="rotate(-18)"
+             stroke="#00E0FF"
+             stroke-width="2.2"
+             stroke-linecap="round"/>
+
+    <!-- A — left leg -->
+    <path d="M 0 -110 L -70 110"
+          stroke="#0A1628"
+          stroke-width="4.5"
+          stroke-linecap="square"/>
+
+    <!-- A — right leg -->
+    <path d="M 0 -110 L 70 110"
+          stroke="#0A1628"
+          stroke-width="4.5"
+          stroke-linecap="square"/>
+
+    <!-- A — crossbar -->
+    <path d="M -38 30 L 38 30"
+          stroke="#0A1628"
+          stroke-width="4.5"
+          stroke-linecap="square"/>
+
+    <!-- Apex node (electric accent) -->
+    <circle cx="0" cy="-110" r="4.5" fill="#00E0FF"/>
+  </g>
+
+  <!-- ============================================================
+       WORDMARK
+       Wide-tracked uppercase geometric sans, set well below the
+       mark with generous negative space — Swiss/premium feel.
+       ============================================================ -->
+  <g transform="translate(300 660)" text-anchor="middle">
+    <text y="0"
+          font-family="'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+          font-size="26"
+          font-weight="500"
+          letter-spacing="9"
+          fill="#0A1628">ALTEX</text>
+    <text y="34"
+          font-family="'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+          font-size="11"
+          font-weight="400"
+          letter-spacing="6"
+          fill="#0A1628">A G E N C Y</text>
+  </g>
+</svg>
