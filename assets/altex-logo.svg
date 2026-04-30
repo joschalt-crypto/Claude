@@ -7,63 +7,75 @@
      aria-label="Altex Agency">
   <title>Altex Agency</title>
 
-  <!-- Transparent background by design (no <rect> fill) -->
+  <defs>
+    <!-- Tokens kept as named variables in comments for clarity -->
+    <!-- ink:    #0A1628  (deep navy, near-black)            -->
+    <!-- accent: #00E0FF  (electric blue)                    -->
+  </defs>
+
+  <!-- Transparent background by design -->
 
   <!-- ============================================================
-       MONOGRAM MARK
-       Geometric "A" with a thin orbital ring suggesting connectivity.
-       Centered horizontally; sits in the upper-middle of the canvas
-       to mirror the Tommy Martins card composition.
+       MONOGRAM "A"
+       Architectural triangular A built from precise stroked paths.
+       The crossbar is split in two — left half ink, right half
+       electric — a subtle "interlock / connection" cue without
+       resorting to the obvious orbit-ring cliché.
        ============================================================ -->
-  <g transform="translate(300 380)">
+  <g transform="translate(300 372)"
+     stroke-linecap="square"
+     stroke-linejoin="miter"
+     stroke-miterlimit="10">
 
-    <!-- Orbit ring (electric accent) -->
-    <ellipse cx="0" cy="10"
-             rx="150" ry="44"
-             transform="rotate(-18)"
-             stroke="#00E0FF"
-             stroke-width="2.2"
-             stroke-linecap="round"/>
-
-    <!-- A — left leg -->
-    <path d="M 0 -110 L -70 110"
+    <!-- Left leg -->
+    <path d="M 0 -108 L -92 108"
           stroke="#0A1628"
-          stroke-width="4.5"
-          stroke-linecap="square"/>
+          stroke-width="5"/>
 
-    <!-- A — right leg -->
-    <path d="M 0 -110 L 70 110"
+    <!-- Right leg -->
+    <path d="M 0 -108 L 92 108"
           stroke="#0A1628"
-          stroke-width="4.5"
-          stroke-linecap="square"/>
+          stroke-width="5"/>
 
-    <!-- A — crossbar -->
-    <path d="M -38 30 L 38 30"
+    <!-- Crossbar — left half (ink) -->
+    <path d="M -44 26 L 0 26"
           stroke="#0A1628"
-          stroke-width="4.5"
-          stroke-linecap="square"/>
+          stroke-width="5"/>
 
-    <!-- Apex node (electric accent) -->
-    <circle cx="0" cy="-110" r="4.5" fill="#00E0FF"/>
+    <!-- Crossbar — right half (electric accent) -->
+    <path d="M 0 26 L 44 26"
+          stroke="#00E0FF"
+          stroke-width="5"/>
+
+    <!-- Apex node — small precise square, architectural feel -->
+    <rect x="-4" y="-112" width="8" height="8" fill="#00E0FF"/>
   </g>
 
   <!-- ============================================================
-       WORDMARK
-       Wide-tracked uppercase geometric sans, set well below the
-       mark with generous negative space — Swiss/premium feel.
+       DIVIDER
+       Hairline rule between mark and wordmark. Short, centered,
+       electric — Swiss-typographic restraint.
        ============================================================ -->
-  <g transform="translate(300 660)" text-anchor="middle">
-    <text y="0"
+  <line x1="280" y1="540" x2="320" y2="540"
+        stroke="#00E0FF"
+        stroke-width="1.2"/>
+
+  <!-- ============================================================
+       WORDMARK
+       "ALTEX" set large with wide tracking; "A G E N C Y" set
+       small and very wide-tracked beneath, mirroring the cadence
+       of the Tommy Martins card.
+       ============================================================ -->
+  <g text-anchor="middle" fill="#0A1628">
+    <text x="300" y="610"
           font-family="'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
-          font-size="26"
-          font-weight="500"
-          letter-spacing="9"
-          fill="#0A1628">ALTEX</text>
-    <text y="34"
+          font-size="34"
+          font-weight="600"
+          letter-spacing="12">ALTEX</text>
+    <text x="300" y="648"
           font-family="'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
           font-size="11"
           font-weight="400"
-          letter-spacing="6"
-          fill="#0A1628">A G E N C Y</text>
+          letter-spacing="7">A G E N C Y</text>
   </g>
 </svg>
