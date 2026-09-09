@@ -1,0 +1,12 @@
+# Godot
+.godot/
+.godot-bin/
+mobile-games/.godot/
+mobile-games/android/
+export/
+*.translation
+
+# OS / editor noise
+.DS_Store
+node_modules/
+shots/
