@@ -49,8 +49,27 @@ would report a false pass.
 | `tests/smoke.gd` | The checks run by `tools/test.sh` |
 | `tests/screenshot.gd` | The renderer used by `tools/screenshot.sh` |
 
+## Playing it on a phone
+
+The project is exported to the web and committed to `docs/`, which GitHub Pages
+serves. Rebuild after any change:
+
+```bash
+tools/build_web.sh    # exports into docs/ (fetches export templates once)
+git add docs && git commit -m "Rebuild web build" && git push
+```
+
+The build uses Godot's **nothreads** web template on purpose. The threaded one
+needs `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` response
+headers, and GitHub Pages cannot set those, so the threaded build would fail to
+start.
+
+`docs/.nojekyll` matters too: without it Pages runs Jekyll, which drops files
+whose names start with an underscore or dot.
+
 ## Shipping to Android
 
-Not set up here — it needs the Android SDK plus Godot's export templates,
-neither of which is installed. In the editor: install export templates, add an
-Android preset, then `godot --headless --path mobile-games --export-release Android game.apk`.
+Not set up. It needs the Android SDK and a Java toolchain, neither of which is
+installed here. The export templates are already handled by `tools/build_web.sh`.
+Once the SDK is in place: add an Android preset in the editor, then
+`godot --headless --path mobile-games --export-release Android game.apk`.

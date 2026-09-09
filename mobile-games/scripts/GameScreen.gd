@@ -65,13 +65,18 @@ func game_over(headline: String = "Game over") -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	_overlay.add_child(dim)
 
+	# A CenterContainer keeps the card centred at any screen size; anchoring
+	# the VBox directly leaves it clipped against the left edge on narrow
+	# phones.
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay.add_child(center)
+
 	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_CENTER)
 	box.add_theme_constant_override("separation", 16)
 	box.custom_minimum_size = Vector2(520, 0)
-	box.position = Vector2(-260, -180)
-	box.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_overlay.add_child(box)
+	center.add_child(box)
 
 	box.add_child(Palette.label(headline, 52))
 	box.add_child(Palette.label(str(score), 110, Palette.ACCENT))

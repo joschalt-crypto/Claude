@@ -10,3 +10,4 @@ export/
 .DS_Store
 node_modules/
 shots/
+build/
