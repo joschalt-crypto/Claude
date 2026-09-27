@@ -1,0 +1,65 @@
+# CV content. Edit this file, then run `npm run build` to regenerate the PDF.
+#
+# - `name`, `headline` and `contact` make up the header. Contact lines that are
+#   an email address, phone number or web address become links.
+# - Every other top-level key is a section, printed in the order written here.
+#   The key is the heading, so sections can be renamed, reordered, translated
+#   or deleted freely. How a section looks follows what it contains:
+#     text                     paragraphs
+#     list of entries          jobs, degrees, projects … with the fields
+#                              title, org, location, dates, link, summary, bullets
+#     "Label: value" lines     aligned rows, e.g. skills or languages
+#     list of plain lines      bullet points
+# - Inside text, **double asterisks** make bold and [text](https://…) a link.
+# - Put a value in quotes if it contains ": " or starts with [ { * & ! % @ or `
+
+name: Your Name
+headline: Target Job Title
+
+contact:
+  - your.name@example.com
+  - +44 7700 900000
+  - City, Country
+  - linkedin.com/in/your-name
+  - github.com/your-name
+
+Profile: >
+  Two or three sentences on who you are professionally: your field and years of
+  experience, what you are especially good at, and the kind of role you want
+  next. Tailor this part to each application.
+
+Experience:
+  - title: Most Recent Job Title
+    org: Company Name
+    location: City
+    dates: Mar 2022 – Present
+    bullets:
+      - Start each bullet with a strong verb and show the result, e.g. “Cut monthly
+        reporting time from **3 days to 4 hours** by automating data collection.”
+      - Quantify impact wherever you can, with money saved, growth, time, scale or
+        team size.
+      - Use 3–5 bullets for recent roles and fewer for older ones.
+
+  - title: Previous Job Title
+    org: Company Name
+    location: City
+    dates: Sep 2019 – Feb 2022
+    bullets:
+      - Focus on achievements rather than duties. What changed because you were there?
+      - Mirror the keywords used in the job ads you are applying to.
+
+Education:
+  - title: Degree, Subject
+    org: University or School
+    location: City
+    dates: 2015 – 2019
+    bullets:
+      - Optional thesis, final grade, honours or relevant coursework.
+
+Skills:
+  Core skills: Skill one, Skill two, Skill three, Skill four
+  Tools: Tool one, Tool two, Tool three
+
+Languages:
+  English: Native
+  Second language: Fluent (C1)

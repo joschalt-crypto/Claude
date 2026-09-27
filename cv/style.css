@@ -1,0 +1,201 @@
+/* Print styles for the CV. Colours and fonts are set in :root. */
+
+:root {
+  --text: #1f2328;
+  --muted: #59636e;
+  --accent: #1d5b8f;
+  --rule: #d1d9e0;
+  --sans: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Source Serif 4", Georgia, serif;
+}
+
+/* The name in the footer comes from cv.yaml (see build.mjs). Page one has
+   no footer, so a one-page CV has none at all. */
+@page {
+  size: A4;
+  margin: 15mm 17mm 16mm;
+
+  @bottom-left {
+    color: var(--muted);
+    font: 8pt var(--sans);
+  }
+
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    color: var(--muted);
+    font: 8pt var(--sans);
+  }
+}
+
+@page :first {
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font: 10pt/1.42 var(--sans);
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+dl,
+dd {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+strong {
+  font-weight: 600;
+}
+
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+.sep {
+  margin: 0 0.2em;
+  color: #9aa3ad;
+}
+
+/* Header */
+
+.masthead {
+  margin-bottom: 15pt;
+}
+
+h1 {
+  font: 600 25pt/1.1 var(--serif);
+  letter-spacing: -0.005em;
+}
+
+.headline {
+  margin-top: 4pt;
+  color: var(--accent);
+  font-size: 12pt;
+}
+
+.contact {
+  margin-top: 7pt;
+  color: var(--muted);
+  font-size: 9pt;
+}
+
+/* Sections */
+
+section + section {
+  margin-top: 13pt;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 8pt;
+  margin-bottom: 7pt;
+  color: var(--accent);
+  font-size: 8.75pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  break-after: avoid;
+}
+
+h2::after {
+  content: "";
+  flex: 1;
+  border-top: 0.75pt solid var(--rule);
+}
+
+section > p + p {
+  margin-top: 5pt;
+}
+
+ul {
+  padding-left: 11pt;
+}
+
+li + li {
+  margin-top: 2pt;
+}
+
+li::marker {
+  color: var(--accent);
+}
+
+/* Entries: jobs, degrees, projects … */
+
+.entry {
+  break-inside: avoid;
+}
+
+.entry + .entry {
+  margin-top: 9pt;
+}
+
+.entry-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12pt;
+}
+
+h3 {
+  font-size: 10.5pt;
+  font-weight: 600;
+}
+
+.dates {
+  flex: none;
+  color: var(--muted);
+  font-size: 9pt;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-sub {
+  color: var(--muted);
+  font-size: 9.5pt;
+}
+
+.entry-summary {
+  margin-top: 2pt;
+  font-style: italic;
+}
+
+.entry ul {
+  margin-top: 3pt;
+}
+
+/* Label/value rows: skills, languages … */
+
+.labelled {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 3pt 14pt;
+}
+
+.labelled dt {
+  font-weight: 600;
+}
