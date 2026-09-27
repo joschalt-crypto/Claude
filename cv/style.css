@@ -13,7 +13,7 @@
    no footer, so a one-page CV has none at all. */
 @page {
   size: A4;
-  margin: 15mm 17mm 16mm;
+  margin: 13mm 16mm 14mm;
 
   @bottom-left {
     color: var(--muted);
@@ -46,7 +46,7 @@ html {
 body {
   margin: 0;
   color: var(--text);
-  font: 10pt/1.42 var(--sans);
+  font: 10pt/1.38 var(--sans);
   font-kerning: normal;
   text-rendering: optimizeLegibility;
 }
@@ -88,7 +88,7 @@ dd {
   align-items: center;
   justify-content: space-between;
   gap: 18pt;
-  margin-bottom: 15pt;
+  margin-bottom: 13pt;
 }
 
 .photo {
@@ -119,14 +119,14 @@ h1 {
 /* Sections */
 
 section + section {
-  margin-top: 13pt;
+  margin-top: 11pt;
 }
 
 h2 {
   display: flex;
   align-items: center;
   gap: 8pt;
-  margin-bottom: 7pt;
+  margin-bottom: 6pt;
   color: var(--accent);
   font-size: 8.75pt;
   font-weight: 600;
@@ -164,7 +164,7 @@ li::marker {
 }
 
 .entry + .entry {
-  margin-top: 9pt;
+  margin-top: 8pt;
 }
 
 .entry-head {
@@ -206,6 +206,7 @@ h3 {
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 3pt 14pt;
+  break-inside: avoid;
 }
 
 .labelled dt {
