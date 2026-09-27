@@ -1,7 +1,8 @@
 # CV content. Edit this file, then run `npm run build` to regenerate the PDF.
 #
-# - `name`, `headline` and `contact` make up the header. Contact lines that are
-#   an email address, phone number or web address become links.
+# - `name`, `headline`, `contact` and an optional `photo` (a file path relative
+#   to this file) make up the header. Contact lines that are an email address,
+#   phone number or web address become links.
 # - Every other top-level key is a section, printed in the order written here.
 #   The key is the heading, so sections can be renamed, reordered, translated
 #   or deleted freely. How a section looks follows what it contains:

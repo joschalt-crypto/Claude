@@ -6,7 +6,7 @@
 // Set CHROMIUM_PATH to print with an existing Chrome/Chromium instead of the
 // browser installed by `npx playwright install chromium`.
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
@@ -24,7 +24,7 @@ const FONTS = [
   '@fontsource/source-serif-4/600.css',
 ];
 
-const HEADER_KEYS = new Set(['name', 'headline', 'contact']);
+const HEADER_KEYS = new Set(['name', 'headline', 'contact', 'photo']);
 
 // Keeps separators glued to the item before them, so a wrapped line never
 // starts with "·".
@@ -108,6 +108,9 @@ function sectionBody(value) {
 const name = cv.get('name') || 'Your Name';
 const headline = cv.get('headline');
 const contact = list(cv.get('contact')).map(autoLink);
+// The photo path is relative to the content file.
+const photo = cv.get('photo') && resolve(dirname(dataPath), cv.get('photo'));
+if (photo) await access(photo);
 const sections = [...cv]
   .filter(([key, value]) => !HEADER_KEYS.has(key) && !isEmpty(value))
   .map(([heading, value]) => `<section><h2>${esc(heading)}</h2>${sectionBody(value)}</section>`);
@@ -131,9 +134,12 @@ ${FONTS.map((font) => `<link rel="stylesheet" href="${import.meta.resolve(font)}
 </head>
 <body>
 <header class="masthead">
-  <h1>${esc(name)}</h1>
-  ${headline ? `<p class="headline">${inline(headline)}</p>` : ''}
-  ${contact.length ? `<p class="contact">${contact.join(SEP)}</p>` : ''}
+  <div>
+    <h1>${esc(name)}</h1>
+    ${headline ? `<p class="headline">${inline(headline)}</p>` : ''}
+    ${contact.length ? `<p class="contact">${contact.join(SEP)}</p>` : ''}
+  </div>
+  ${photo ? `<img class="photo" src="${pathToFileURL(photo).href}" alt="">` : ''}
 </header>
 ${sections.join('\n')}
 </body>
