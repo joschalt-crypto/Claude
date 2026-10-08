@@ -150,6 +150,9 @@ function afChips(af) {
   const sh = shakeList(af);
   return `<span class="tchip hot">${icon('flame')}${esc(af.c)} °C</span><span class="tchip">${icon('clock')}${esc(af.m)} Min</span>${af.pre ? '<span class="tchip">vorheizen</span>' : ''}${sh.length ? `<span class="tchip">${icon('shake')}schütteln nach ${sh.join(' & ')} Min</span>` : ''}`;
 }
+function tmChips(tm) {
+  return `<span class="tchip tmc">${icon('tm')}${esc(tmTime(tm.sec))}</span>${tm.temp ? `<span class="tchip">${icon('thermo')}${esc(tmTemp(tm.temp))}</span>` : ''}${tm.rev ? `<span class="tchip">${icon('rev')}Linkslauf</span>` : ''}<span class="tchip">${icon(tm.speed === 'knet' ? 'wheat' : 'gauge')}${esc(tmSpeed(tm.speed))}</span>`;
+}
 function histLine(id, key) {
   const h = histOf(id);
   const today = todayKey();
@@ -180,6 +183,7 @@ function openRecipe(id, ctx, opener) {
       const f = uid ? findEntry(uid) : null;
       if (!d || (uid && !f)) { closeSheet(); return; }
       const af = firstAf(d);
+      const tmn = tmCount(d);
       const fav = !!S.favs[d.id];
       const otherWeek = f && +mondayOf(fromKey(f.key)) !== +thisMonday();
       const eyebrow = f ? `${dayName(f.key)}${otherWeek ? `, ${dateShort(fromKey(f.key))}` : ''} · ${SLOT[f.slot].name}` : (CAT[d.cat] || 'Gericht');
@@ -196,10 +200,11 @@ function openRecipe(id, ctx, opener) {
           ${d.name && d.name !== d.t ? `<p class="r-name">${esc(d.name)}</p>` : ''}
           ${d.note ? `<p class="r-note">${icon('pin')}${esc(d.note)}</p>` : ''}
           ${ctx && ctx.fresh ? `<p class="fresh">${icon('sparkle')}<span>Aus deinem Foto angelegt. Bitte kurz prüfen – mit dem Stift oben lässt sich alles ändern.</span></p>` : ''}
-          <div class="facts">
+          <div class="facts${af && tmn ? ' four' : ''}">
             <div class="fact"><small>Zeit</small><b>${d.time ? `${esc(d.time)} Min` : '–'}</b></div>
             <div class="fact"><small>Personen</small><div class="stepper"><button type="button" data-act="sv" data-d="-1" aria-label="Eine Person weniger"${st.servings <= 1 ? ' disabled' : ''}>${icon('minus')}</button><b aria-live="polite">${st.servings}</b><button type="button" data-act="sv" data-d="1" aria-label="Eine Person mehr"${st.servings >= 12 ? ' disabled' : ''}>${icon('plus')}</button></div></div>
-            <div class="fact${af ? ' hot' : ''}"><small>Cosori</small><b>${af ? `${esc(af.c)} °C` : '–'}</b></div>
+            ${af || !tmn ? `<div class="fact${af ? ' hot' : ''}"><small>Cosori</small><b>${af ? `${esc(af.c)} °C` : '–'}</b></div>` : ''}
+            ${tmn ? `<div class="fact tmf"><small>Thermomix</small><b>${plural(tmn, 'Schritt', 'Schritte')}</b></div>` : ''}
           </div>
           ${histLine(d.id, f && f.key)}
           ${f && st.servings !== S.settings.people ? `<p class="fine">Gilt für ${esc(dayName(f.key))} und zählt so in die Einkaufsliste.</p>` : ''}
@@ -264,7 +269,7 @@ function openRecipe(id, ctx, opener) {
       if (act === 'r-edit') { const back = UI.opener; closeSheet({ instant: true }); openForm(st.id, back); return true; }
       if (act === 'r-cook') { openCook(st.id, st.servings); return true; }
       if (act === 'copy-dish') { copyText(dishListText(d, st.servings), el); return true; }
-      if (act === 'timer') { const s = d.steps[Number(el.dataset.step)]; if (s && s.af) startTimer(d, s.af, `${d.id}:${el.dataset.step}`); return true; }
+      if (act === 'timer') { const s = d.steps[Number(el.dataset.step)]; if (s && (s.af || s.tm)) startTimer(d, s, `${d.id}:${el.dataset.step}`); return true; }
       return false;
     },
   };
@@ -322,9 +327,13 @@ function stepsPane(d, servings) {
   const factor = servings / (d.sv || 2);
   const afs = d.steps.filter((s) => s.af);
   const fry = afs.length ? `<section class="fry-sum">${thumbHTML({ img: 'ob-cosori', t: '' })}<div><h3>Im Cosori</h3><ol>${afs.map((s) => `<li><b>${esc(s.af.c)} °C · ${esc(s.af.m)} Min</b> – ${esc(s.af.label || 'Garen')}${shakeList(s.af).length ? `, schütteln nach ${shakeList(s.af).join(' & ')} Min` : ''}</li>`).join('')}</ol>${factor > 1.01 ? '<p>Bei mehr Personen in mehreren Durchgängen garen.</p>' : ''}</div></section>` : '';
+  const tms = d.steps.filter((s) => s.tm);
+  const mix = tms.length ? `<section class="fry-sum tm-sum"><span class="tm-tile" aria-hidden="true">${icon('tm')}</span><div><h3>Im Thermomix</h3><ol>${tms.map((s) => `<li><b>${esc(tmLine(s.tm))}</b> – ${esc(s.tm.label || 'Thermomix')}</li>`).join('')}</ol>${factor > 1.01 ? '<p>Bei mehr Personen etwas länger garen – der Mixtopf fasst höchstens 2,2 Liter.</p>' : ''}</div></section>` : '';
   const steps = d.steps.length ? `<ol class="steps">${d.steps.map((s, i) => (s.af
     ? `<li><div class="af-card"><div class="chips-row">${afChips(s.af)}</div><p>${esc(s.t)}</p><button type="button" class="timer-btn" data-act="timer" data-step="${i}">${icon('play', 'fill')}Timer ${esc(s.af.m)}:00</button></div></li>`
-    : `<li><p>${esc(s.t)}</p></li>`)).join('')}</ol>` : '<p class="lead">Noch keine Zubereitung eingetragen.</p>';
+    : s.tm
+      ? `<li><div class="tm-card"><div class="chips-row">${tmChips(s.tm)}</div><p>${esc(s.t)}</p>${s.tm.sec >= 60 ? `<button type="button" class="timer-btn tm" data-act="timer" data-step="${i}">${icon('play', 'fill')}Timer ${tmClock(s.tm.sec)}</button>` : ''}</div></li>`
+      : `<li><p>${esc(s.t)}</p></li>`)).join('')}</ol>` : '<p class="lead">Noch keine Zubereitung eingetragen.</p>';
   const tip = d.tip ? `<p class="tip">${icon('bulb')}<span><b>Tipp:</b> ${esc(d.tip)}</span></p>` : '';
   const src = d.src && safeUrl(d.src.url);
   const q = d.ck || d.t;
@@ -332,11 +341,12 @@ function stepsPane(d, servings) {
     ${src ? `<a class="row" href="${esc(src)}" target="_blank" rel="noopener"><span class="row-ic" style="--tile:#8e8e93">${icon('link')}</span><span class="grow"><b>Original-Rezept</b><small>${esc(src.replace(/^https?:\/\/(www\.)?/i, '').slice(0, 48))}</small></span>${icon('external', 'chev')}</a>` : ''}
     <a class="row" href="${chefkochUrl(q)}" target="_blank" rel="noopener"><span class="row-ic" style="--tile:#3e8e41">${icon('search')}</span><span class="grow"><b>Varianten auf Chefkoch</b><small>Suche nach „${esc(q)}“</small></span>${icon('external', 'chev')}</a>
     <a class="row" href="${chefkochUrl(q.replace(/\s*airfryer\s*/i, ' ').trim() + ' Airfryer')}" target="_blank" rel="noopener"><span class="row-ic" style="--tile:#ef6c1a">${icon('flame')}</span><span class="grow"><b>Airfryer-Rezepte auf Chefkoch</b><small>Weitere Ideen für den Cosori</small></span>${icon('external', 'chev')}</a>
+    <a class="row" href="${chefkochUrl(q.replace(/\s*airfryer\s*/i, ' ').trim() + ' Thermomix')}" target="_blank" rel="noopener"><span class="row-ic" style="--tile:#14855a">${icon('tm')}</span><span class="grow"><b>Thermomix-Rezepte auf Chefkoch</b><small>Ähnliches für den Thermomix</small></span>${icon('external', 'chev')}</a>
   </div>`;
   const photos = d.photo && d.photo.n ? `<div class="pane-h"><h3>${d.photo.n > 1 ? 'Originalfotos' : 'Originalfoto'}</h3></div><div class="orig">${photoCache.has(d.id)
     ? (photoCache.get(d.id).map((s, i) => `<button type="button" class="orig-btn" data-act="photo-view" data-id="${esc(d.id)}" data-i="${i}" aria-label="Originalfoto ${i + 1} groß zeigen"><img src="${s}" alt=""></button>`).join('') || '<p class="fine">Das Foto ist nicht mehr verfügbar.</p>')
     : '<div class="orig-skel" aria-hidden="true"></div>'}</div>` : '';
-  return fry + steps + tip + photos + links;
+  return fry + mix + steps + tip + photos + links;
 }
 
 /* picker for a day */
@@ -360,7 +370,7 @@ function openPicker(key, slot, opener, choose) {
       const q = st.q.trim().toLowerCase();
       const ds = allDishes().filter((d) => matches(d, q));
       const row = (d, cap) => `<button type="button" class="row pick-row" data-act="pick-dish" data-id="${esc(d.id)}">${thumbHTML(d)}<span class="grow"><b style="display:block;font-weight:600">${esc(d.t)}</b><small style="display:block;font-size:13px;color:var(--label-2)">${esc(cap)}</small></span><span class="plus" aria-hidden="true">${icon('plus')}</span></button>`;
-      const capOf = (d) => { const h = histOf(d.id); return h.last ? `zuletzt ${relDay(h.last)}` : [d.time ? `${d.time} Min` : '', firstAf(d) ? 'Cosori' : ''].filter(Boolean).join(' · ') || (CAT[d.cat] || ''); };
+      const capOf = (d) => { const h = histOf(d.id); return h.last ? `zuletzt ${relDay(h.last)}` : [d.time ? `${d.time} Min` : '', firstAf(d) ? 'Cosori' : '', tmCount(d) ? 'Thermomix' : ''].filter(Boolean).join(' · ') || (CAT[d.cat] || ''); };
       const groups = [];
       if (!q) {
         const recent = ds.map((d) => ({ d, h: histOf(d.id) })).filter((x) => x.h.last && (st.slot === 'f' ? x.d.cat === 'fruehstueck' : x.d.cat !== 'fruehstueck')).sort((a, b) => (a.h.last < b.h.last ? 1 : -1)).slice(0, 5).map((x) => x.d);
@@ -469,12 +479,12 @@ function fromClaude(data, people) {
     return o;
   });
   if (ing.length) { out.ingPrev = ing; out.ingText = ing.map(ingToLine).join('\n'); }
-  const steps = (Array.isArray(data.steps) ? data.steps : []).filter((s) => s && str(s.t, 600)).slice(0, 14).map((s) => ({
-    t: str(s.t, 600),
-    af: s.af && typeof s.af === 'object' && Number(s.af.m) > 0
+  const steps = (Array.isArray(data.steps) ? data.steps : []).filter((s) => s && str(s.t, 600)).slice(0, 16).map((s) => {
+    const af = s.af && typeof s.af === 'object' && Number(s.af.m) > 0
       ? { label: str(s.af.label, 40), c: Math.min(200, Math.max(40, Number(s.af.c) || 180)), m: Math.min(120, Math.round(Number(s.af.m))), sh: (Array.isArray(s.af.sh) ? s.af.sh : [s.af.sh]).map(Number).filter((n) => n > 0).join(', '), pre: !!s.af.pre }
-      : null,
-  }));
+      : null;
+    return { t: str(s.t, 600), af, tm: af ? null : normTm(s.tm) };
+  });
   if (steps.length) out.steps = steps;
   if (str(data.tip, 300)) out.tip = str(data.tip, 300);
   return out;
@@ -520,14 +530,16 @@ async function openPermissions() {
     toast('Bitte im Menü dieses Artifacts unter „Berechtigungen“ Claude erlauben.');
   }
 }
-const RECIPE_JSON = `{"t":"kurzer Name für die Wochenplan-Karte, höchstens 4 Wörter","name":"vollständiger Rezeptname","cat":"fruehstueck|haupt|leicht|suess","time":35,"veg":true,"ingredients":[{"q":200,"u":"g","n":"Spaghetti","s":"trocken","p":false,"x":""}],"steps":[{"t":"Schritt in 1–3 Sätzen","af":null},{"t":"Schritt im Cosori","af":{"label":"Gemüse rösten","c":200,"m":15,"sh":[7],"pre":false}}],"tip":"kurzer Tipp"}`;
-const RECIPE_RULES = `Regeln: "s" ist die Supermarkt-Abteilung, einer von: obst (Obst & Gemüse, frische Kräuter), brot, kuehl (Milchprodukte, Käse, Eier, Tofu), fleisch (auch Fisch), trocken (Nudeln, Reis, Getreide, Linsen), konserve (Dosen, Gläser, Saucen), backen (Zucker, Nüsse, Backzutaten), gewuerz (Gewürze, Öl, Essig), tk, getraenke. "p": true nur für Vorratszutaten, die fast jeder zu Hause hat (Salz, Pfeffer, Öl, Zucker, Mehl, Butter, Brühe, Essig, Senf, Honig, Paprikapulver, Zimt). "q" ist eine Zahl oder null, "u" eine Einheit aus g, ml, EL, TL, Bund, Dose, Pck, Kugel, Topf, Zehe, Prise, Scheibe, Stange oder "" für Stück. "n" im Singular, "x" eine kurze Zusatzinfo oder "". Im Cosori höchstens 200 °C, "m" in Minuten, "sh" = Minuten, nach denen geschüttelt oder gewendet wird ([] wenn nie), "pre" = vorheizen. Schreibe die Schritte in einfachen, klaren Sätzen im Kochbuch-Stil (z. B. „Zwiebel fein würfeln und in Öl glasig dünsten.“).`;
+const RECIPE_JSON = `{"t":"kurzer Name für die Wochenplan-Karte, höchstens 4 Wörter","name":"vollständiger Rezeptname","cat":"fruehstueck|haupt|leicht|suess","time":35,"veg":true,"ingredients":[{"q":200,"u":"g","n":"Spaghetti","s":"trocken","p":false,"x":""}],"steps":[{"t":"Schritt in 1–3 Sätzen","af":null,"tm":null},{"t":"Zwiebel halbieren, in den Mixtopf geben und zerkleinern.","af":null,"tm":{"label":"Zwiebel zerkleinern","sec":5,"temp":null,"speed":5,"rev":false}},{"t":"Tomaten zugeben und köcheln lassen.","af":null,"tm":{"label":"Sauce köcheln","sec":600,"temp":100,"speed":1,"rev":true}},{"t":"Schritt im Cosori","af":{"label":"Gemüse rösten","c":200,"m":15,"sh":[7],"pre":false},"tm":null}],"tip":"kurzer Tipp"}`;
+// the family's kitchen, for every prompt that writes a recipe
+const DEVICES = `Die Familie kocht mit einem Cosori Airfryer (Heißluftfritteuse, Korb ca. 5,5 L, höchstens 200 °C) und sehr gern mit dem Thermomix (TM5/TM6/TM7, Mixtopf 2,2 L, bis 120 °C, Varoma zum Dampfgaren). Nimm den Thermomix zum Zerkleinern, Andünsten, für Saucen, Suppen, Risotto, Milchreis, Porridge, Pürees, Dips, Teig und zum Dampfgaren; den Cosori zum Rösten, Backen, Überbacken, für Knuspriges und zum Aufbacken. Hat ein Rezept schon Thermomix-Einstellungen (etwa von Cookidoo, z. B. „10 Min/100 °C/Linkslauf/Stufe 1“), übernimm sie genau.`;
+const RECIPE_RULES = `Regeln: "s" ist die Supermarkt-Abteilung, einer von: obst (Obst & Gemüse, frische Kräuter), brot, kuehl (Milchprodukte, Käse, Eier, Tofu), fleisch (auch Fisch), trocken (Nudeln, Reis, Getreide, Linsen), konserve (Dosen, Gläser, Saucen), backen (Zucker, Nüsse, Backzutaten), gewuerz (Gewürze, Öl, Essig), tk, getraenke. "p": true nur für Vorratszutaten, die fast jeder zu Hause hat (Salz, Pfeffer, Öl, Zucker, Mehl, Butter, Brühe, Essig, Senf, Honig, Paprikapulver, Zimt). "q" ist eine Zahl oder null, "u" eine Einheit aus g, ml, EL, TL, Bund, Dose, Pck, Kugel, Topf, Zehe, Prise, Scheibe, Stange oder "" für Stück. "n" im Singular, "x" eine kurze Zusatzinfo oder "". Im Cosori höchstens 200 °C, "m" in Minuten, "sh" = Minuten, nach denen geschüttelt oder gewendet wird ([] wenn nie), "pre" = vorheizen. Thermomix ("tm"): "sec" = Dauer in Sekunden, "temp" = 37 bis 120 (°C), "varoma" oder null (ohne Hitze), "speed" = Stufe 0.5 bis 10, "sanft" (Sanftrührstufe), "knet" (Knetstufe) oder "turbo", "rev" = Linkslauf (für Fleisch, Reis, Linsen und alles, was stückig bleiben soll); typisch sind Zwiebeln zerkleinern 5 Sek/Stufe 5, Andünsten 3 Min/120 °C/Stufe 1, Köcheln 100 °C/Linkslauf/Stufe 1, Pürieren Stufe 6 bis 10, Teig 2 Min/Knetstufe, Dampfgaren im Varoma mit 500 g Wasser. Jeder Schritt nutzt höchstens ein Gerät: "af" oder "tm" oder keins; die Einstellungen stehen nur in "af"/"tm", der Text beschreibt, was in den Mixtopf oder Korb kommt. Schreibe die Schritte in einfachen, klaren Sätzen im Kochbuch-Stil (z. B. „Zwiebel fein würfeln und in Öl glasig dünsten.“).`;
 
-const draftDefaults = (people) => ({ t: '', b: '', note: '', sub: '', cat: 'haupt', name: '', time: '', sv: people, veg: true, src: '', ingText: '', ingPrev: [], steps: [{ t: '', af: null }], tip: '' });
+const draftDefaults = (people) => ({ t: '', b: '', note: '', sub: '', cat: 'haupt', name: '', time: '', sv: people, veg: true, src: '', ingText: '', ingPrev: [], steps: [{ t: '', af: null, tm: null }], tip: '' });
 function dishFromDraft(F) {
-  const steps = (F.steps || []).filter((x) => String(x.t || '').trim() || x.af).map((x) => {
+  const steps = (F.steps || []).filter((x) => String(x.t || '').trim() || x.af || normTm(x.tm)).map((x) => {
     const t = String(x.t || '').trim();
-    if (!x.af) return { t, af: null };
+    if (!x.af) { const tm = normTm(x.tm); return tm ? { t, af: null, tm } : { t, af: null }; }
     const sh = String(x.af.sh || '').split(/[,;& ]+/).map(Number).filter((n) => n > 0);
     return { t, af: { label: String(x.af.label || '').trim(), c: Math.min(200, Math.max(40, Number(x.af.c) || 180)), m: Math.min(120, Math.max(1, Number(x.af.m) || 10)), sh: sh.length > 1 ? sh : sh[0] || null, pre: !!x.af.pre } };
   });
@@ -540,6 +552,20 @@ function dishFromDraft(F) {
   if (src) data.src = { url: src };
   return data;
 }
+const TM_TEMPS = ['', 37, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 105, 110, 115, 120, 'varoma'];
+const TM_SPEEDS = ['sanft', 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 'turbo', 'knet'];
+function tmFields(tm) {
+  const x = tm || { label: '', sec: 300, temp: 100, speed: 1, rev: false };
+  const temps = TM_TEMPS.includes(x.temp || '') ? TM_TEMPS : TM_TEMPS.concat([x.temp]);
+  return `<div class="af-fields tm-fields"${tm ? '' : ' hidden'}>
+    <label class="field">Minuten<input data-tm-min type="number" inputmode="numeric" min="0" max="480" value="${Math.floor(x.sec / 60)}"></label>
+    <label class="field">Sekunden<input data-tm-sec type="number" inputmode="numeric" min="0" max="59" value="${x.sec % 60}"></label>
+    <label class="field">Temperatur<select data-tm-temp>${temps.map((v) => `<option value="${v}"${String(v) === String(x.temp || '') ? ' selected' : ''}>${v ? esc(tmTemp(v)) : 'ohne'}</option>`).join('')}</select></label>
+    <label class="field">Stufe<select data-tm-speed>${TM_SPEEDS.map((v) => `<option value="${v}"${String(v) === String(x.speed) ? ' selected' : ''}>${esc(tmSpeed(v))}</option>`).join('')}</select></label>
+    <label class="toggle mini tm-rev"><input type="checkbox" data-tm-rev${x.rev ? ' checked' : ''}>Linkslauf</label>
+    <label class="field wide">Kurzname<input data-tm-label maxlength="40" placeholder="z. B. Sauce köcheln" value="${esc(x.label || '')}"></label>
+  </div>`;
+}
 function openForm(id, opener, preset) {
   const existing = id ? dish(id) : null;
   const F = existing ? {
@@ -547,7 +573,7 @@ function openForm(id, opener, preset) {
     cat: existing.cat || 'haupt', name: existing.name || '', time: existing.time || '', sv: existing.sv || 2,
     veg: !!existing.veg, src: (existing.src && existing.src.url) || '',
     ingText: (existing.ing || []).map(ingToLine).join('\n'), ingPrev: existing.ing || [],
-    steps: existing.steps.map((s) => ({ t: s.t, af: s.af ? Object.assign({}, s.af, { sh: shakeList(s.af).join(', ') }) : null })),
+    steps: existing.steps.map((s) => ({ t: s.t, af: s.af ? Object.assign({}, s.af, { sh: shakeList(s.af).join(', ') }) : null, tm: s.tm ? Object.assign({}, s.tm) : null })),
     tip: existing.tip || '',
   } : Object.assign(draftDefaults(S.settings.people), preset || {});
   const st = { ctl: null, status: '', busy: false, wish: '', perm: false };
@@ -558,16 +584,19 @@ function openForm(id, opener, preset) {
     F.veg = !!($('#f-veg') && $('#f-veg').checked);
     F.steps = $$('.step-edit').map((row) => {
       const t = row.querySelector('textarea').value;
-      if (!row.querySelector('[data-af-on]').checked) return { t, af: null };
-      const num = (s) => Number(row.querySelector(s).value);
-      return { t, af: { c: num('[data-af-c]') || 180, m: num('[data-af-m]') || 10, sh: row.querySelector('[data-af-sh]').value, pre: row.querySelector('[data-af-pre]').checked, label: row.querySelector('[data-af-label]').value } };
+      const dev = (row.querySelector('[data-dev]:checked') || {}).value || '';
+      const num = (s) => Number(row.querySelector(s).value) || 0;
+      const val = (s) => row.querySelector(s).value;
+      if (dev === 'af') return { t, af: { c: num('[data-af-c]') || 180, m: num('[data-af-m]') || 10, sh: val('[data-af-sh]'), pre: row.querySelector('[data-af-pre]').checked, label: val('[data-af-label]') }, tm: null };
+      if (dev === 'tm') return { t, af: null, tm: { label: val('[data-tm-label]'), sec: num('[data-tm-min]') * 60 + num('[data-tm-sec]'), temp: val('[data-tm-temp]'), speed: val('[data-tm-speed]'), rev: row.querySelector('[data-tm-rev]').checked } };
+      return { t, af: null, tm: null };
     });
   };
   const view = {
     render() {
       $('#sheet').innerHTML = `${sheetHead(existing ? 'Rezept bearbeiten' : 'Neues Rezept', { left: '<button type="button" class="link" data-act="close">Abbrechen</button>', right: '<button type="submit" class="link b" form="dishForm">Sichern</button>' })}<div class="pad">
         <div class="ai-box"${sampleFn ? '' : ' hidden'}>
-          <p><b>${icon('sparkle')} Claude schreibt das Rezept</b><br>Namen eintragen, dann schlägt Claude Zutaten, Zubereitung und Cosori-Schritte vor.</p>
+          <p><b>${icon('sparkle')} Claude schreibt das Rezept</b><br>Namen eintragen, dann schlägt Claude Zutaten, Zubereitung und die Schritte für Cosori und Thermomix vor.</p>
           <label class="field">Wünsche <span class="opt">(optional)</span><input id="f-wish" placeholder="z. B. vegetarisch, schnell, mit Reis" value="${esc(st.wish)}"></label>
           <div class="acts-row"><button class="btn primary small" type="button" data-act="claude"${st.busy ? ' disabled' : ''}>${icon('sparkle')}Vorschlag holen</button>${st.busy ? '<button class="btn small" type="button" data-act="claude-stop">Stopp</button>' : ''}${!existing && canScan() && !st.busy ? `<button class="btn small" type="button" data-act="scan">${icon('camera')}Lieber scannen</button>` : ''}</div>
           ${statusHTML(st)}
@@ -586,7 +615,7 @@ function openForm(id, opener, preset) {
             ${F.steps.map((s, i) => `<div class="step-edit">
               <label class="vh" for="f-step-${i}">Schritt ${i + 1}</label>
               <textarea id="f-step-${i}" rows="3" placeholder="Schritt ${i + 1}">${esc(s.t)}</textarea>
-              <div class="step-bar"><label class="toggle mini"><input type="checkbox" data-af-on data-act="af-toggle"${s.af ? ' checked' : ''}>Cosori-Schritt</label><button type="button" class="mini" data-act="del-step" data-i="${i}" aria-label="Schritt ${i + 1} löschen">${icon('trash')}</button></div>
+              <div class="step-bar"><div class="dev-seg" role="radiogroup" aria-label="Gerät für Schritt ${i + 1}">${[['', 'Ohne', ''], ['af', 'Cosori', 'flame'], ['tm', 'Thermomix', 'tm']].map(([v, l, ic]) => `<label><input type="radio" name="dev-${i}" value="${v}" data-dev data-act="dev"${(v === 'af' && s.af) || (v === 'tm' && !s.af && s.tm) || (!v && !s.af && !s.tm) ? ' checked' : ''}><span>${ic ? icon(ic) : ''}${l}</span></label>`).join('')}</div><button type="button" class="mini" data-act="del-step" data-i="${i}" aria-label="Schritt ${i + 1} löschen">${icon('trash')}</button></div>
               <div class="af-fields"${s.af ? '' : ' hidden'}>
                 <label class="field">°C<input data-af-c type="number" inputmode="numeric" min="40" max="200" value="${esc(s.af ? s.af.c : 180)}"></label>
                 <label class="field">Minuten<input data-af-m type="number" inputmode="numeric" min="1" max="120" value="${esc(s.af ? s.af.m : 10)}"></label>
@@ -594,6 +623,7 @@ function openForm(id, opener, preset) {
                 <label class="field wide">Kurzname<input data-af-label maxlength="40" placeholder="z. B. Gemüse rösten" value="${esc(s.af && s.af.label ? s.af.label : '')}"></label>
                 <label class="toggle mini wide"><input type="checkbox" data-af-pre${s.af && s.af.pre ? ' checked' : ''}>Vorheizen</label>
               </div>
+              ${tmFields(!s.af && s.tm ? s.tm : null)}
             </div>`).join('')}
             <button type="button" class="btn small" data-act="add-step" style="justify-self:start">${icon('plus')}Schritt hinzufügen</button>
           </fieldset>
@@ -613,9 +643,9 @@ function openForm(id, opener, preset) {
       $('#dishForm').addEventListener('submit', (e) => { e.preventDefault(); read(); save(); });
     },
     act(act, el) {
-      if (act === 'add-step') { read(); F.steps.push({ t: '', af: null }); this.render(); const ta = $$('.step-edit textarea').pop(); if (ta) ta.focus(); return true; }
-      if (act === 'del-step') { read(); F.steps.splice(Number(el.dataset.i), 1); if (!F.steps.length) F.steps.push({ t: '', af: null }); this.render(); return true; }
-      if (act === 'af-toggle') { el.closest('.step-edit').querySelector('.af-fields').hidden = !el.checked; return true; }
+      if (act === 'add-step') { read(); F.steps.push({ t: '', af: null, tm: null }); this.render(); const ta = $$('.step-edit textarea').pop(); if (ta) ta.focus(); return true; }
+      if (act === 'del-step') { read(); F.steps.splice(Number(el.dataset.i), 1); if (!F.steps.length) F.steps.push({ t: '', af: null, tm: null }); this.render(); return true; }
+      if (act === 'dev') { const row = el.closest('.step-edit'); row.querySelector('.af-fields:not(.tm-fields)').hidden = el.value !== 'af'; row.querySelector('.tm-fields').hidden = el.value !== 'tm'; return true; }
       if (act === 'claude') { read(); askClaude(); return true; }
       if (act === 'claude-stop') { if (st.ctl) st.ctl.abort(); return true; }
       if (act === 'delete-dish') { const back = UI.opener; closeSheet({ instant: true }); confirmDelete(id, back); return true; }
@@ -661,7 +691,7 @@ function openForm(id, opener, preset) {
     const people = Number(F.sv) || S.settings.people;
     const prompt = `Du schreibst Rezepte für Antom, eine deutsche Familien-App zur Wochenplanung.
 Gericht: "${F.t.trim()}"${wish ? `\nWünsche der Familie: ${wish}` : ''}
-Rezept für ${people} Personen. Die Familie kocht mit einem Cosori Airfryer (Heißluftfritteuse, Korb ca. 5,5 L, höchstens 200 °C). Nutze den Cosori für mindestens einen sinnvollen Schritt (z. B. Gemüse rösten, Kartoffeln, Croutons, Nüsse, Fisch, Hähnchen, Brot aufbacken). Nur wenn er wirklich keinen Sinn ergibt, setze bei allen Schritten "af": null.
+Rezept für ${people} Personen. ${DEVICES} Nutze die Geräte für jeden Schritt, bei dem sie helfen – mindestens einen Schritt mit Cosori oder Thermomix. Nur wenn beide wirklich keinen Sinn ergeben, setze überall "af": null und "tm": null.
 Antworte nur mit JSON in genau diesem Format:
 ${RECIPE_JSON}
 ${RECIPE_RULES}`;

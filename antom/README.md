@@ -2,7 +2,7 @@
 
 Wochenplan fürs Essen, nach dem Vorbild der Magnettafel am Kühlschrank: Frühstück und
 Hauptessen für jeden Tag planen, Gerichte umsortieren und zu jedem Gericht die Zutaten, die
-Einkaufsliste und die Zubereitung im Cosori-Airfryer sehen.
+Einkaufsliste und die Zubereitung mit Cosori-Airfryer und Thermomix sehen.
 
 Läuft als Claude-Artifact (privat, Öffnen über Claude):
 https://claude.ai/artifact/JW7gSbmGHVaQ9XFbXKtoDn
@@ -17,10 +17,15 @@ https://claude.ai/artifact/JW7gSbmGHVaQ9XFbXKtoDn
 - **Woche planen**: „Frühstück wie letzte Woche“, Claude füllt freie Tage (kennt Favoriten und
   was es zuletzt gab), „Woche leeren“ ab heute.
 - **Rezept**: großes Foto mit Parallax, Favoriten-Herz, Personenzahl pro Tag, Verlauf
-  („zuletzt vor 2 Wochen · 3× in 3 Monaten“), Zutaten zum Abhaken, Zubereitung mit Cosori-Karte
-  und Timer, Chefkoch-Links. Sheets lassen sich am Handy nach unten wegwischen.
-- **Kochmodus**: große Schritte, Zutaten zum Abhaken, Cosori-Timer mit Schüttel-Erinnerung
-  (Ton und Vibration), der Bildschirm bleibt an.
+  („zuletzt vor 2 Wochen · 3× in 3 Monaten“), Zutaten zum Abhaken, Zubereitung mit Cosori- und
+  Thermomix-Karten und Timer, Chefkoch-Links. Sheets lassen sich am Handy nach unten wegwischen.
+- **Thermomix**: 17 der 25 Rezepte haben Thermomix-Schritte (TM5/TM6/TM7) – Zeit, Temperatur oder
+  Varoma, Stufe (auch Sanftrühr-, Knetstufe und Turbo) und Linkslauf, geschrieben wie auf dem
+  Gerät („14 Min/100 °C/Linkslauf/Stufe 1“). Jeder Schritt ist entweder ein Cosori- oder ein
+  Thermomix-Schritt; im Formular wählt man das Gerät pro Schritt. Kochbuch-Filter „Mit Thermomix“,
+  Grundregeln in den Einstellungen.
+- **Kochmodus**: große Schritte, Zutaten zum Abhaken, Timer für Cosori (mit Schüttel-Erinnerung,
+  Ton und Vibration) und Thermomix, der Bildschirm bleibt an.
 - **Einkaufsliste**: pro Woche, „ab heute“ oder die ganze Woche, nach Supermarkt-Abteilungen
   sortiert, eigene Artikel, Vorrat, Fortschrittsring, Kopieren für WhatsApp.
 - **Kochbuch**: 25 Rezepte mit Fotos, Kategorie-Kacheln, „Rezept der Woche“, Suche (auch nach
@@ -29,13 +34,15 @@ https://claude.ai/artifact/JW7gSbmGHVaQ9XFbXKtoDn
   mehrere Seiten). Claude erkennt das Rezept, Antom legt es mit Einkaufsliste und Cosori-Schritt
   direkt im Kochbuch an, auf Wunsch gleich für einen Tag geplant. Das Originalfoto hängt am Rezept;
   bei einem fotografierten Gericht wird das Foto zum Bild des Rezepts.
-- **Chefkoch**: Chefkoch hat keine offene Schnittstelle, und die Seite darf fremde Seiten nicht
+- **Chefkoch & Cookidoo**: Chefkoch hat keine offene Schnittstelle, und die Seite darf fremde Seiten nicht
   laden. Darum gibt es Suchlinks an jedem Rezept, und „Von Chefkoch“ nimmt an, was die Familie hat:
-  - einen **Link** – Claude schreibt das Gericht aus dem Namen in der Adresse (typisches Rezept, nicht
-    das genaue Original),
+  - einen **Link** – Claude schreibt das Gericht aus dem Namen in der Adresse oder dem Text daneben
+    (typisches Rezept, nicht das genaue Original). Cookidoo-Links enthalten keinen Namen; dann fragt
+    die Seite danach und Claude schreibt ein Thermomix-Rezept,
   - den kopierten **Rezepttext** – Claude übernimmt ihn genau,
   - **Screenshots** – lange Handy-Screenshots werden in bis zu vier lesbare Stücke geteilt, HEIC wird
-    nach Möglichkeit in JPEG umgewandelt.
+    nach Möglichkeit in JPEG umgewandelt. Thermomix-Einstellungen aus Cookidoo-Screenshots übernimmt
+    Claude genau.
 
   Fehler erklärt die Seite in Klartext (z. B. „Claude ist für dieses Antom noch nicht erlaubt“ mit Knopf
   „Claude erlauben“, der die Berechtigungen öffnet). Ohne Claude oder nach einem Fehler übernimmt
@@ -78,7 +85,9 @@ die Seite im Browser (`localStorage`, Schlüssel `antom.v4`).
   bis heute sind zugleich der Verlauf („zuletzt gekocht“).
 - `shop/<JJJJ-Www>`: Einkaufsliste einer ISO-Woche – abgehakte Artikel, benötigter Vorrat, eigene Artikel
 - `dishes/<id>`: eigene und angepasste Rezepte (`{ deleted: true }` blendet ein eingebautes aus);
-  gescannte haben `origin: "scan"`, `photo: { kind, n }` und bei Gerichten ein `thumb`
+  gescannte haben `origin: "scan"`, `photo: { kind, n }` und bei Gerichten ein `thumb`. Ein Schritt ist
+  `{ t, af }` (Cosori: `{ label, c, m, sh, pre }`) oder `{ t, tm }` (Thermomix: `{ label, sec, temp, speed, rev }`
+  mit `temp` als °C, `"varoma"` oder `null` und `speed` als Zahl, `"sanft"`, `"knet"` oder `"turbo"`)
 - `photos/<id>`: die Originalfotos eines gescannten Rezepts als JPEG-Data-URLs (`{ kind, pages, at }`,
   zusammen unter 256 KiB pro Dokument)
 - `meta/favs`: `{ ids: { <id>: Zeitstempel } }`
@@ -95,7 +104,7 @@ die alten Dokumente auf (im Browser genauso von `antom.v1` nach `antom.v4`).
 Braucht Node mit `playwright` und ein Chromium (Pfad bei Bedarf über `CHROMIUM_PATH`).
 
 ```sh
-node test/functional.js                      # über 200 Prüfungen: Woche, Ziehen, Einkauf, Kochbuch, Scan, Import, Fotos ohne Netz …
+node test/functional.js                      # über 230 Prüfungen: Woche, Ziehen, Einkauf, Kochbuch, Scan, Import, Thermomix, Fotos ohne Netz …
 node test/visual.js [phone|tablet|desktop]   # Screenshots nach test/shots/
 ```
 

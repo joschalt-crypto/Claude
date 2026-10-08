@@ -77,7 +77,7 @@ function fitDataUrl(img, maxEdge, maxChars, square) {
 
 /* ---------- camera scan: photo → recipe in the cookbook ---------- */
 const SCAN_JSON = '{"art":"rezept|gericht|name|nichts","grund":"",' + RECIPE_JSON.slice(1);
-const SCAN_STEPS = ['Claude liest das Foto …', 'Zutaten werden sortiert …', 'Der Cosori-Schritt wird geplant …', 'Gleich fertig …'];
+const SCAN_STEPS = ['Claude liest das Foto …', 'Zutaten werden sortiert …', 'Cosori und Thermomix werden eingeplant …', 'Gleich fertig …'];
 function scanPrompt(n, hint, people) {
   return `Du bekommst ${n === 1 ? 'ein Foto' : `${n} Fotos`} aus der Handykamera, für Antom, eine deutsche Familien-App zur Wochenplanung.${n > 1 ? ' Die Fotos gehören zum selben Rezept, zum Beispiel zwei Seiten.' : ''}
 Bestimme zuerst, was zu sehen ist, und setze "art":
@@ -87,7 +87,7 @@ Bestimme zuerst, was zu sehen ist, und setze "art":
 - "nichts": weder Essen noch ein Rezept erkennbar. Dann antworte nur {"art":"nichts","grund":"kurzer Grund"}.
 ${hint ? `Hinweis der Familie zum Foto: ${hint.slice(0, 200)}\n` : ''}Weitere Regeln:
 - Mengen auf ${persons(people)} umrechnen.
-- Die Familie hat einen Cosori Airfryer (Korb ca. 5,5 L, höchstens 200 °C). Schreibe Schritte für Backofen, Braten, Rösten oder Aufbacken auf den Cosori um – mit Temperatur, Minuten und wann geschüttelt wird. Sonst "af": null.
+- ${DEVICES} Schreibe Schritte für Backofen, Rösten oder Aufbacken auf den Cosori um – mit Temperatur, Minuten und wann geschüttelt wird – und Topf- und Pfannenschritte wie Zerkleinern, Andünsten, Köcheln, Pürieren oder Kneten auf den Thermomix. Sonst "af": null und "tm": null.
 Antworte nur mit JSON in genau diesem Format:
 ${SCAN_JSON}
 ${RECIPE_RULES}`;
@@ -225,18 +225,26 @@ function openScan(opener, ctx = {}) {
 
 /* ---------- recipe from elsewhere: a link, pasted text or screenshots ---------- */
 const URL_RE = /https?:\/\/[^\s"'<>]+/i;
+// path parts that are not a dish: "recipes", "rezepte", "de-DE", "r145196" (Cookidoo links carry no name)
+const URL_GENERIC = /^(recipes?|rezepte?|rezept|recette|ricetta|collection|collections|search|suche|r\d+|rs|s\d+|amp|print|[a-z]{2}(-[a-z]{2})?)$/i;
 // "https://www.chefkoch.de/rezepte/123/Kuerbissuppe-mit-Ingwer.html" → "Kuerbissuppe mit Ingwer"
 function nameFromUrl(u) {
   try {
     const segs = new URL(u).pathname.split('/').filter(Boolean).reverse();
-    const seg = segs.map((x) => decodeURIComponent(x).replace(/\.(html?|php|aspx?)$/i, '')).find((x) => /[a-zäöüß]{3}/i.test(x)) || '';
+    const seg = segs.map((x) => decodeURIComponent(x).replace(/\.(html?|php|aspx?)$/i, '')).find((x) => /[a-zäöüß]{3}/i.test(x) && !URL_GENERIC.test(x)) || '';
     return seg.replace(/[-_+]+/g, ' ').replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim();
   } catch (e) { return ''; }
 }
+const isCookidoo = (u) => /(^|\.)cookidoo\.|thermomix\./i.test((() => { try { return new URL(u).hostname; } catch (e) { return ''; } })());
+// a pasted share text is not a recipe: "Schau dir dieses Rezept an: Gulaschsuppe https://…"
+const looksLikeRecipe = (t) => t.length >= 160 || t.split(/\n+/).filter((x) => x.trim()).length >= 4 || /\d+\s*(g|kg|ml|l|el|tl|stück|prise|dose|bund)\b/i.test(t);
 function readPaste(text) {
   const link = safeUrl((String(text).match(URL_RE) || [])[0] || '');
   const rest = String(text).replace(URL_RE, '').trim();
-  return { link, rest, linkOnly: !!link && rest.length < 40, name: link ? nameFromUrl(link) : '' };
+  const linkOnly = !!link && !looksLikeRecipe(rest);
+  const said = rest.replace(/^[^:]*(rezept|gefunden|schau|sieh|guck|probier)[^:]*:\s*/i, '').replace(/\s*[|–-]\s*(chefkoch|cookidoo)\b.*$/i, '').replace(/^[„“"']+|[„“"'.!]+$/g, '').trim();
+  const name = !link ? '' : (linkOnly && said.length >= 3 && said.length <= 80 ? said : '') || nameFromUrl(link);
+  return { link, rest, linkOnly, name, tm: !!link && isCookidoo(link) };
 }
 // screenshots for Claude: JPEG (also from HEIC where the browser can read it), long ones cut
 // into a few readable pieces from top to bottom
@@ -279,12 +287,12 @@ async function prepareShots(files, max) {
 function importPrompt(kind, people, body, sliced) {
   const head = kind === 'link'
     ? `Die Familie hat nur einen Link zu einem Rezept geschickt: ${body.link}
-Du kannst die Seite nicht öffnen. Aus der Adresse geht der Name des Gerichts hervor: "${body.name}" (in Adressen stehen Umlaute oft als ae, oe, ue und ss – bitte richtig schreiben).
-Schreibe dafür ein typisches, alltagstaugliches Rezept, so wie man es auf Chefkoch für dieses Gericht findet.`
+Du kannst die Seite nicht öffnen. Das Gericht heißt: "${body.name}" (in Adressen stehen Umlaute oft als ae, oe, ue und ss – bitte richtig schreiben).
+${body.tm ? 'Es ist ein Thermomix-Rezept von Cookidoo: Schreibe ein typisches Thermomix-Rezept dafür, mit den Einstellungen in "tm".' : 'Schreibe dafür ein typisches, alltagstaugliches Rezept, so wie man es auf Chefkoch für dieses Gericht findet.'}`
     : `Du bekommst ein Rezept ${kind === 'shots' ? (sliced ? 'als Screenshot, in mehrere Bilder von oben nach unten geteilt' : 'als Screenshot(s)') : 'als kopierten Text'}, zum Beispiel von Chefkoch. Übernimm es möglichst genau: keine Zutaten erfinden oder weglassen.`;
   return `${head} Wandle es für Antom um, eine deutsche Familien-App zur Wochenplanung.
 - Mengen auf ${persons(people)} umrechnen.
-- Die Zubereitung in klaren Schritten schreiben. Die Familie hat einen Cosori Airfryer (Korb ca. 5,5 L, höchstens 200 °C): Wo es sinnvoll ist (Backofen, Braten, Rösten, Aufbacken), schreibe Schritte für den Cosori um – mit Temperatur, Minuten und wann geschüttelt wird. Sonst "af": null.
+- Die Zubereitung in klaren Schritten schreiben. ${DEVICES} Wo es sinnvoll ist, schreibe Schritte für Backofen, Rösten oder Aufbacken auf den Cosori um (mit Temperatur, Minuten und wann geschüttelt wird) und Topf- und Pfannenschritte auf den Thermomix. Sonst "af": null und "tm": null.
 - Werbung, Kommentare und Nährwerte weglassen.
 Antworte nur mit JSON in genau diesem Format:
 ${RECIPE_JSON}
@@ -294,7 +302,10 @@ function openImport(opener) {
   const st = { mode: prefs.get('impMode2', 'paste'), files: [], busy: false, status: '', perm: false, failed: false, ctl: null, q: '', text: '' };
   const hintFor = (text) => {
     const r = readPaste(text);
-    if (r.linkOnly) return r.name ? `Link erkannt: „${r.name}“. Claude schreibt das Rezept nach diesem Namen – für das genaue Original lieber den Text oder einen Screenshot einfügen.` : 'Aus diesem Link lässt sich kein Gericht erkennen. Bitte den Rezepttext oder einen Screenshot einfügen.';
+    if (r.linkOnly) {
+      if (r.name) return `Link erkannt: „${r.name}“. Claude schreibt das Rezept nach diesem Namen – für das genaue Original lieber den Text oder einen Screenshot einfügen.`;
+      return r.tm ? 'Cookidoo-Links verraten den Namen des Gerichts nicht. Bitte den Namen dazuschreiben – oder einen Screenshot vom Rezept nehmen, dann übernimmt Antom auch die Thermomix-Einstellungen genau.' : 'Aus diesem Link lässt sich kein Gericht erkennen. Bitte den Namen dazuschreiben oder den Rezepttext oder einen Screenshot einfügen.';
+    }
     return 'Am einfachsten: den Link einfügen. Ganz genau wird es mit dem Rezepttext oder einem Screenshot.';
   };
   const view = {
@@ -302,11 +313,11 @@ function openImport(opener) {
       const can = !!sampleFn;
       const shots = st.mode === 'shots' && UI.canImages;
       $('#sheet').innerHTML = `${sheetHead('Rezept übernehmen')}<div class="pad">
-        <div class="imp-hero">${imgOf('scan-card', 'm')}<p>Von Chefkoch oder jeder anderen Seite – Antom macht daraus ein Rezept mit Einkaufsliste und Cosori-Schritt.</p></div>
+        <div class="imp-hero">${imgOf('scan-card', 'm')}<p>Von Chefkoch, Cookidoo oder jeder anderen Seite – Antom macht daraus ein Rezept mit Einkaufsliste und Schritten für Cosori und Thermomix.</p></div>
         ${UI.canImages ? `<div class="seg" role="tablist" aria-label="Art"><button type="button" role="tab" data-act="imp-mode" data-mode="paste" aria-selected="${!shots}">${icon('link')}Link oder Text</button><button type="button" role="tab" data-act="imp-mode" data-mode="shots" aria-selected="${shots}">${icon('image')}Screenshots</button></div>` : ''}
         ${shots
           ? `<label class="drop">${icon('image')}<span>Screenshots auswählen<br><small>Lange Screenshots teilt Antom automatisch.</small></span><input type="file" id="impFiles" accept="image/*" multiple></label><div class="thumbs" id="impThumbs"></div>`
-          : `<label class="field">Link oder Rezepttext<textarea id="impText" rows="6" placeholder="Chefkoch-Link oder Zutaten und Zubereitung hier einfügen …">${esc(st.text)}</textarea></label><p class="fine" id="impHint">${esc(hintFor(st.text))}</p>`}
+          : `<label class="field">Link oder Rezepttext<textarea id="impText" rows="6" placeholder="Link (Chefkoch, Cookidoo …) oder Zutaten und Zubereitung hier einfügen …">${esc(st.text)}</textarea></label><p class="fine" id="impHint">${esc(hintFor(st.text))}</p>`}
         ${can
           ? `<button class="btn primary wide" type="button" data-act="imp-go"${st.busy ? ' disabled' : ''}>${icon('sparkle')}Mit Claude umwandeln</button>${st.busy ? '<button class="btn wide" type="button" data-act="imp-stop">Stopp</button>' : ''}${statusHTML(st)}${st.failed && !st.busy ? `<button class="btn wide" type="button" data-act="imp-manual">${icon('edit')}Selbst eintragen</button>` : ''}`
           : `<p class="tip">${icon('info')}<span>Zum automatischen Umwandeln Antom angemeldet bei Claude öffnen. Ihr könnt das Rezept aber auch selbst eintragen.</span></p><button class="btn primary wide" type="button" data-act="imp-manual">${icon('edit')}Selbst eintragen</button>`}
@@ -350,7 +361,7 @@ function openImport(opener) {
     const shots = st.mode === 'shots' && UI.canImages;
     const r = readPaste(st.text);
     if (shots && !st.files.length) { say('Bitte zuerst einen Screenshot wählen.'); return; }
-    if (!shots && r.linkOnly && !r.name) { say('Aus diesem Link lässt sich kein Gericht erkennen. Bitte den Rezepttext oder einen Screenshot einfügen.'); return; }
+    if (!shots && r.linkOnly && !r.name) { say(r.tm ? 'Cookidoo-Links verraten den Namen nicht. Bitte den Namen des Gerichts dazuschreiben oder einen Screenshot nehmen.' : 'Aus diesem Link lässt sich kein Gericht erkennen. Bitte den Namen dazuschreiben oder den Rezepttext oder einen Screenshot einfügen.'); return; }
     if (!shots && !r.linkOnly && st.text.trim().length < 30) { say('Bitte einen Link oder den Rezepttext (Zutaten und Zubereitung) einfügen.'); return; }
     const people = S.settings.people;
     st.ctl = new AbortController();
@@ -426,7 +437,7 @@ function openSuggest(opener) {
   const tk = todayKey();
   const book = allDishes().filter((d) => d.cat !== 'fruehstueck').map((d) => {
     const h = histOf(d.id);
-    return `${d.id}: ${d.t} (${CAT[d.cat] || 'Gericht'}${d.time ? `, ${d.time} Min` : ''}${d.veg ? ', vegetarisch' : ''}${firstAf(d) ? ', Cosori' : ''}${S.favs[d.id] ? ', Lieblingsgericht' : ''}${h.last ? `, zuletzt vor ${dayDiff(tk, h.last)} Tagen` : ''})`;
+    return `${d.id}: ${d.t} (${CAT[d.cat] || 'Gericht'}${d.time ? `, ${d.time} Min` : ''}${d.veg ? ', vegetarisch' : ''}${firstAf(d) ? ', Cosori' : ''}${tmCount(d) ? ', Thermomix' : ''}${S.favs[d.id] ? ', Lieblingsgericht' : ''}${h.last ? `, zuletzt vor ${dayDiff(tk, h.last)} Tagen` : ''})`;
   }).join('\n');
   const planned = weekDays(UI.week).map((d) => `${d.key} (${d.name}): ${dayPlan(d.key).h.map((e) => (dish(e.d) || {}).t).filter(Boolean).join(', ') || 'frei'}`).join('\n');
   const prompt = `Plane die Hauptessen für eine Familie (${persons(S.settings.people)}) aus ihrem eigenen Kochbuch. Monat: ${MONTHS[new Date().getMonth()]}.
@@ -527,7 +538,9 @@ function openSettings(opener) {
         <div class="group"><button type="button" class="row" data-act="onboard"><span class="row-ic" style="--tile:var(--accent)">${icon('info')}</span><span class="grow">Einführung ansehen</span>${icon('chevron-right', 'chev')}</button></div>
         <h3 class="sec-h">Cosori-Grundregeln</h3>
         <ol class="group rules">${COSORI_RULES.map((r, i) => `<li><span class="n">${i + 1}</span><span>${esc(r)}</span></li>`).join('')}</ol>
-        <p class="sec-f" style="padding-bottom:8px">Die Rezepte sind für 2 Personen geschrieben, die Garzeiten für einen Cosori mit etwa 5,5 Litern. Die Fotos hat Higgsfield erzeugt.</p>
+        <h3 class="sec-h">Thermomix-Grundregeln</h3>
+        <ol class="group rules tm">${TM_RULES.map((r, i) => `<li><span class="n">${i + 1}</span><span>${esc(r)}</span></li>`).join('')}</ol>
+        <p class="sec-f" style="padding-bottom:8px">Die Rezepte sind für 2 Personen geschrieben, die Garzeiten für einen Cosori mit etwa 5,5 Litern und einen Thermomix TM5, TM6 oder TM7. Die Fotos hat Higgsfield erzeugt.</p>
       </div>`;
       renderChrome();
     },
@@ -576,8 +589,8 @@ function toast(msg, opts = {}) {
   toastTimer = setTimeout(() => { el.hidden = true; undoFn = null; }, undoFn ? 6500 : 3200);
 }
 
-/* ---------- Cosori timer ---------- */
-const T = { iv: 0, end: 0, total: 0, label: '', key: '', dishId: '', temp: 0, shakes: [], fired: new Set(), audio: null, wake: null, done: false, paused: false, left: 0, alertUntil: 0 };
+/* ---------- timer for a Cosori or Thermomix step ---------- */
+const T = { iv: 0, end: 0, total: 0, label: '', key: '', dishId: '', kind: 'af', temp: 0, tm: null, shakes: [], fired: new Set(), audio: null, wake: null, done: false, paused: false, left: 0, alertUntil: 0 };
 function beep(times = 1) {
   try {
     if (!T.audio) T.audio = new (window.AudioContext || window.webkitAudioContext)();
@@ -596,15 +609,25 @@ function beep(times = 1) {
 async function wakeOn() { try { if (navigator.wakeLock && !T.wake) T.wake = await navigator.wakeLock.request('screen'); } catch (e) { T.wake = null; } }
 function wakeOff() { if (!$('#cook').hidden || T.iv) return; try { if (T.wake) T.wake.release(); } catch (e) { /* released */ } T.wake = null; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (T.iv || !$('#cook').hidden)) { T.wake = null; wakeOn(); } });
-function startTimer(d, af, key) {
+// what the Thermomix should show besides the time: "100 °C · Linkslauf · Stufe 1";
+// in cook mode the temperature (or the speed without heat) is already shown big
+const tmSub = (tm) => [tmTemp(tm.temp), tm.rev ? 'Linkslauf' : '', tmSpeed(tm.speed)].filter(Boolean).join(' · ');
+const tmCookSub = (tm) => (tm.temp ? [tm.rev ? 'Linkslauf' : '', tmSpeed(tm.speed)].filter(Boolean).join(' · ') : tm.rev ? 'Linkslauf' : 'ohne Hitze');
+function startTimer(d, step, key) {
+  const af = step.af, tm = af ? null : step.tm;
+  if (!af && !tm) return;
   try { if (!T.audio) T.audio = new (window.AudioContext || window.webkitAudioContext)(); if (T.audio.state === 'suspended') T.audio.resume(); } catch (e) { T.audio = null; }
   clearInterval(T.iv);
-  Object.assign(T, { total: af.m * 60, end: Date.now() + af.m * 60000, label: `${d.t} · ${af.label || 'Cosori'}`, key, dishId: d.id, temp: af.c, shakes: shakeList(af), fired: new Set(), done: false, paused: false, alertUntil: 0 });
+  const total = tm ? tm.sec : af.m * 60;
+  Object.assign(T, {
+    total, end: Date.now() + total * 1000, label: `${d.t} · ${(tm ? tm.label : af.label) || (tm ? 'Thermomix' : 'Cosori')}`, key, dishId: d.id,
+    kind: tm ? 'tm' : 'af', temp: af ? af.c : 0, tm, shakes: af ? shakeList(af) : [], fired: new Set(), done: false, paused: false, alertUntil: 0,
+  });
   T.iv = setInterval(tickTimer, 250);
   wakeOn();
   tickTimer();
   haptic(12);
-  if ($('#cook').hidden) toast(`Timer läuft: ${af.m} Min bei ${af.c} °C`);
+  if ($('#cook').hidden) toast(tm ? `Timer läuft: ${tmLine(tm)}` : `Timer läuft: ${af.m} Min bei ${af.c} °C`);
 }
 function pauseTimer() {
   if (!T.iv && !T.paused) return;
@@ -628,16 +651,17 @@ function tickTimer() {
     if (left <= 0) { T.done = true; beep(3); clearInterval(T.iv); T.iv = 0; }
   }
   const s = timerState();
-  const info = T.done ? 'Fertig! Bitte nachsehen.' : s.alert ? 'Jetzt schütteln oder wenden!' : T.paused ? 'Pausiert' : s.next ? `Schütteln in ${mmss(s.next * 60 - s.elapsed)}` : `${T.temp} °C`;
+  const info = T.done ? 'Fertig! Bitte nachsehen.' : s.alert ? 'Jetzt schütteln oder wenden!' : T.paused ? 'Pausiert' : s.next ? `Schütteln in ${mmss(s.next * 60 - s.elapsed)}` : T.kind === 'tm' ? tmSub(T.tm) : `${T.temp} °C`;
   const pill = $('#timer');
   const showPill = $('#cook').hidden;
   pill.hidden = !showPill;
   if (showPill) {
     pill.classList.toggle('alert', !!s.alert || T.done);
-    pill.innerHTML = `${thumbHTML({ img: 'ob-cosori', t: '' })}<div class="t-main" data-act="timer-open" role="button" tabindex="0" aria-label="Kochmodus öffnen"><span class="t-label">${esc(T.label)}</span><span class="t-time" role="timer">${T.done ? '0:00' : mmss(s.left)}</span><span class="t-next" aria-live="polite">${esc(info)}</span></div><div class="t-btns">${T.done ? '' : '<button type="button" data-act="timer-plus" aria-label="Eine Minute mehr">+1</button>'}<button type="button" data-act="timer-stop">${T.done ? 'OK' : 'Stopp'}</button></div>`;
+    pill.classList.toggle('tm', T.kind === 'tm');
+    pill.innerHTML = `${T.kind === 'tm' ? `<span class="thumb tm-tile" aria-hidden="true">${icon('tm')}</span>` : thumbHTML({ img: 'ob-cosori', t: '' })}<div class="t-main" data-act="timer-open" role="button" tabindex="0" aria-label="Kochmodus öffnen"><span class="t-label">${esc(T.label)}</span><span class="t-time" role="timer">${T.done ? '0:00' : mmss(s.left)}</span><span class="t-next" aria-live="polite">${esc(info)}</span></div><div class="t-btns">${T.done ? '' : '<button type="button" data-act="timer-plus" aria-label="Eine Minute mehr">+1</button>'}<button type="button" data-act="timer-stop">${T.done ? 'OK' : 'Stopp'}</button></div>`;
   }
   const ring = $('#cook [data-ring]');
-  if (ring && ring.dataset.ring === T.key) updateRing(ring, s, info);
+  if (ring && ring.dataset.ring === T.key) updateRing(ring, s, T.kind === 'tm' && !T.done && !T.paused ? tmCookSub(T.tm) : info);
 }
 function updateRing(ring, s, info) {
   const circ = 2 * Math.PI * 70;
@@ -696,10 +720,17 @@ function renderCook() {
       <ul class="prep">${(d.ing || []).map((i, n) => { const q = scaleQ(i.q, i.u, factor, false); return `<li><label><input type="checkbox" id="prep-${n}"><span class="q">${esc(amountText(q, i.u))}</span><span>${esc(ingName(i, q))}${i.x ? ` (${esc(i.x)})` : ''}</span></label></li>`; }).join('')}</ul>`;
   } else {
     const af = p.s.af;
+    const tm = af ? null : p.s.tm;
     const key = `${d.id}:${p.i}`;
     const active = T.key === key;
     const sh = shakeList(af);
+    const ring = (label, unit) => `<div class="ring-big" data-ring="${esc(key)}"><svg viewBox="0 0 160 160" aria-hidden="true"><circle class="track" cx="80" cy="80" r="70"/><circle class="prog" cx="80" cy="80" r="70" style="stroke-dasharray:440;stroke-dashoffset:0"/></svg><div class="t"><b>${active ? '' : esc(label)}</b><small>${unit}</small></div></div>`;
     main = `<p class="cook-eyebrow">Schritt ${C.i} von ${pages.length - 1}</p>
+      ${tm ? `<div class="fry tmx">
+        ${ring(tm.sec < 60 ? String(tm.sec) : tmClock(tm.sec), tm.sec < 60 ? 'Sekunden' : 'Minuten')}
+        <div class="fry-info"><span class="lbl">${icon('tm')}${esc(tm.label || 'Thermomix')}</span><span class="temp">${esc(tm.temp ? tmTemp(tm.temp) : tmSpeed(tm.speed))}</span><span class="lbl" data-info>${esc(tmCookSub(tm))}</span>
+          <div class="fry-btns">${active || tm.sec < 60 ? '' : `<button type="button" data-act="cook-timer" data-step="${p.i}">${icon('play', 'fill')}Timer starten</button>`}</div></div>
+      </div>` : ''}
       ${af ? `<div class="fry">
         <div class="ring-big" data-ring="${esc(key)}"><svg viewBox="0 0 160 160" aria-hidden="true"><circle class="track" cx="80" cy="80" r="70"/><circle class="prog" cx="80" cy="80" r="70" style="stroke-dasharray:440;stroke-dashoffset:0"/></svg><div class="t"><b>${active ? '' : `${esc(af.m)}:00`}</b><small>Minuten</small></div></div>
         <div class="fry-info"><span class="lbl">${esc(af.label || 'Cosori')}${af.pre ? ' · vorheizen' : ''}</span><span class="temp">${esc(af.c)} °C</span><span class="lbl" data-info>${sh.length ? `Schütteln nach ${sh.join(' & ')} Min` : 'Nicht schütteln nötig'}</span>
@@ -723,7 +754,7 @@ function cookAct(act, el) {
     if (C.i >= cookPages(d).length - 1) { closeCook(); toast('Guten Appetit!'); return; }
     C.i++; C.ing = false; renderCook(); return;
   }
-  if (act === 'cook-timer') { const s = d.steps[Number(el.dataset.step)]; if (s && s.af) { startTimer(d, s.af, `${d.id}:${el.dataset.step}`); renderCook(); } return; }
+  if (act === 'cook-timer') { const s = d.steps[Number(el.dataset.step)]; if (s && (s.af || s.tm)) { startTimer(d, s, `${d.id}:${el.dataset.step}`); renderCook(); } return; }
   if (act === 'timer-pause') { pauseTimer(); return; }
   if (act === 'timer-plus') { T.end += 60000; T.left += 60; T.total += 60; tickTimer(); return; }
   if (act === 'timer-stop') { stopTimer(); return; }
@@ -746,7 +777,7 @@ const OB = [
   { img: 'ob-tisch', t: 'Euer Essen für die ganze Woche', p: 'Frühstück und Hauptessen für jeden Tag – wie die Magnettafel am Kühlschrank, nur immer dabei.' },
   { img: 'scan-card', t: 'Rezepte einfach abfotografieren', p: 'Kochbuch, Zeitschrift oder Omas Rezeptkarte: Foto machen, Antom legt das Rezept an.' },
   { img: 'ob-einkauf', t: 'Die Einkaufsliste schreibt sich selbst', p: 'Alle Zutaten der Woche zusammengerechnet und nach Supermarkt-Abteilungen sortiert.' },
-  { img: 'ob-cosori', t: 'Kochen mit dem Cosori', p: 'Jedes Rezept mit Temperatur, Zeit und Schüttel-Erinnerung – Schritt für Schritt.' },
+  { img: 'ob-cosori', t: 'Kochen mit Cosori und Thermomix', p: 'Jeder Schritt mit Temperatur, Zeit und Stufe – mit Timer, Linkslauf und Schüttel-Erinnerung.' },
 ];
 function showOnboarding() {
   const box = $('#onboard');

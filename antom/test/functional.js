@@ -26,8 +26,9 @@ const RECIPE = {
     { q: 400, u: 'ml', n: 'Kokosmilch', s: 'konserve', p: false, x: '1 Dose' },
   ],
   steps: [
-    { t: 'Kürbis und Zwiebel würfeln und in Öl anschwitzen.', af: null },
-    { t: 'Brotwürfel im Cosori goldbraun rösten.', af: { label: 'Croutons rösten', c: 180, m: 6, sh: [3], pre: false } },
+    { t: 'Kürbis und Zwiebel in den Mixtopf geben und zerkleinern.', af: null, tm: { label: 'Zerkleinern', sec: 5, temp: null, speed: 'Stufe 5', rev: false } },
+    { t: 'Brotwürfel im Cosori goldbraun rösten.', af: { label: 'Croutons rösten', c: 180, m: 6, sh: [3], pre: false }, tm: null },
+    { t: 'Öl und Kokosmilch zugeben und weich köcheln.', af: null, tm: { label: 'Köcheln', sec: 1200, temp: 100, speed: 1, rev: true } },
   ],
   tip: 'Mit Kernöl beträufeln.',
 };
@@ -131,7 +132,8 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     ok(await page.locator('#sheet .ing li.got').count() === 1, 'an ingredient can be ticked off');
     await page.click('#sheet [data-act="rtab"][data-tab="steps"]');
     await wait(page);
-    ok(await page.locator('#sheet .steps > li').count() >= 4 && await page.locator('#sheet .af-card').count() >= 1 && await page.locator('#sheet .fry-sum').count() === 1, 'steps with the Cosori card and summary');
+    ok(await page.locator('#sheet .steps > li').count() >= 4 && await page.locator('#sheet .af-card').count() >= 1 && await page.locator('#sheet .fry-sum:not(.tm-sum)').count() === 1, 'steps with the Cosori card and summary');
+    ok(await page.locator('#sheet .tm-card').count() === 4 && await page.locator('#sheet .tm-sum').count() === 1, 'and the Thermomix steps with their summary');
     ok((await attr(page, '#sheet .links a.row', 'href')) === 'https://www.chefkoch.de/rs/s0/Caponata/Rezepte.html', 'Chefkoch search link', await attr(page, '#sheet .links a.row', 'href'));
     ok(await page.locator('#sheet .hist').count() === 0, 'no history line for a first-time dish');
 
@@ -311,7 +313,7 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await page.fill('#f-time', '50');
     await page.fill('#f-ing', '4 Paprika\n300 g Rinderhack\n1 Zwiebel\n½ TL Paprikapulver\nSalz, Pfeffer');
     await page.fill('#f-step-0', 'Paprika füllen und in den Korb setzen.');
-    await page.check('#sheet .step-edit [data-af-on]');
+    await page.check('#sheet .step-edit [data-dev][value="af"]');
     await page.fill('#sheet .step-edit [data-af-c]', '180');
     await page.fill('#sheet .step-edit [data-af-m]', '20');
     await page.fill('#sheet .step-edit [data-af-sh]', '10');
@@ -378,15 +380,19 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     ok(/Fertig/.test(await text(page, '#sheet .ai-box .status')), 'Claude fills the form');
     ok((await page.inputValue('#f-ing')).includes('800 g Hokkaido-Kürbis') && (await page.inputValue('#f-ing')).includes('400 ml Kokosmilch (1 Dose)'), 'ingredient lines from Claude', await page.inputValue('#f-ing'));
     ok(await page.inputValue('#f-t') === 'Kürbissuppe' && await page.inputValue('#f-wish') === 'mit Croutons', 'name and wish survive the re-render');
-    ok(await page.locator('#sheet .step-edit').count() === 2 && await page.locator('#sheet .step-edit').nth(1).locator('[data-af-on]').isChecked(), 'Cosori step from Claude');
+    ok(await page.locator('#sheet .step-edit').count() === 3 && await page.locator('#sheet .step-edit').nth(1).locator('[data-dev][value="af"]').isChecked(), 'Cosori step from Claude');
+    const tm0 = page.locator('#sheet .step-edit').first();
+    ok(await tm0.locator('[data-dev][value="tm"]').isChecked() && await tm0.locator('[data-tm-sec]').inputValue() === '5' && await tm0.locator('[data-tm-speed]').inputValue() === '5' && await tm0.locator('[data-tm-temp]').inputValue() === '', 'Thermomix step from Claude, "Stufe 5" read as speed 5');
     const prompt = await page.evaluate(() => window.__lastPrompt);
     ok(prompt.includes('"Kürbissuppe"') && prompt.includes('mit Croutons') && prompt.includes('200 °C'), 'prompt carries name, wish and Cosori limit');
+    ok(prompt.includes('Thermomix') && prompt.includes('Linkslauf') && prompt.includes('"tm"'), 'prompt asks for Thermomix steps too');
     await page.click('#sheet .sh-bar button[type="submit"]');
     await wait(page, 500);
     d = await docs(page);
     const soup = Object.entries(d).find(([k, v]) => k.startsWith('dishes/') && v.t === 'Kürbissuppe');
     ok(soup && soup[1].name === 'Kürbissuppe mit Croutons' && soup[1].ing.find((i) => i.n === 'Olivenöl').p === 1 && soup[1].ing.find((i) => i.n === 'Kokosmilch').s === 'konserve', '"Sichern" in the header saves the Claude recipe with aisles and pantry', soup && soup[1].ing);
     ok(soup && soup[1].steps[1].af && soup[1].steps[1].af.sh === 3, 'Claude Cosori step saved', soup && soup[1].steps);
+    ok(soup && soup[1].steps[2].tm && soup[1].steps[2].tm.sec === 1200 && soup[1].steps[2].tm.temp === 100 && soup[1].steps[2].tm.rev === true && !soup[1].steps[2].af, 'Claude Thermomix step saved', soup && soup[1].steps);
 
     // Chefkoch import from pasted text
     await page.evaluate((r) => { window.__sampleReply = Object.assign({}, r, { t: 'Ofen-Kürbis' }); }, RECIPE);
@@ -891,6 +897,111 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     }
   }
 
+  console.log('H. Thermomix');
+  {
+    const { page, errors, ctx } = await newPage(browser, phone, seedScript() + MOCK + SAMPLE_IMAGES);
+    await open(page);
+    await wait(page, 600);
+    ok(await page.locator('#days .meal[data-dish="bolo"] .tmk').count() >= 1, 'week rows mark Thermomix dishes');
+    await page.click('.tabbar [data-tab="book"]');
+    await wait(page, 400);
+    ok(/17 Thermomix/i.test(await text(page, '#bookCap')), 'cookbook counts the Thermomix recipes', await text(page, '#bookCap'));
+    await page.click('#v-book [data-act="filter"][data-f="tm"]');
+    await wait(page, 300);
+    ok(await page.locator('#book .grid .card').count() === 17 && await page.locator('#book .grid .card[data-dish="pizza"]').count() === 0, 'filter "Mit Thermomix"');
+    // recipe: facts, summary, step cards, timer
+    await page.click('#book .grid .card[data-dish="risotto"]');
+    await wait(page, 700);
+    ok((await text(page, '#sheet .fact.tmf')).includes('5 Schritte') && await page.locator('#sheet .facts.four').count() === 1, 'facts show Cosori and Thermomix');
+    await page.click('#sheet [data-act="rtab"][data-tab="steps"]');
+    await wait(page);
+    ok(await page.locator('#sheet .tm-card').count() === 5 && await page.locator('#sheet .tm-sum li').count() === 5, 'five Thermomix steps with a summary');
+    ok((await text(page, '#sheet .tm-sum li:last-child')).startsWith('14 Min/100 °C/Linkslauf/Stufe 1'), 'settings written the way the Thermomix shows them', await text(page, '#sheet .tm-sum li:last-child'));
+    ok((await page.locator('#sheet .tm-card').nth(3).innerText()).includes('Linkslauf'), 'Linkslauf has its own chip');
+    ok(await page.locator('#sheet .tm-card .timer-btn').count() === 3, 'timer only for steps of a minute or more');
+    ok(await page.locator('#sheet .links a.row[href*="Thermomix"]').count() === 1, 'link to Thermomix recipes on Chefkoch');
+    await page.locator('#sheet .tm-card .timer-btn').last().click();
+    await wait(page, 400);
+    await closeSheet(page);
+    ok((await text(page, '#timer .t-next')) === '100 °C · Linkslauf · Stufe 1' && /^1[34]:\d\d$/.test(await text(page, '#timer .t-time')), 'Thermomix timer runs', [await text(page, '#timer .t-next'), await text(page, '#timer .t-time')]);
+    await page.click('#timer [data-act="timer-stop"]');
+    // cook mode
+    await page.click('#book .grid .card[data-dish="milchreis"]');
+    await wait(page, 700);
+    await page.click('#sheet [data-act="r-cook"]');
+    await wait(page, 400);
+    await page.click('#cook [data-act="cook-next"]');
+    await wait(page);
+    ok(await page.locator('#cook .fry.tmx').count() === 1 && (await text(page, '#cook .fry.tmx .temp')) === '90 °C' && (await text(page, '#cook .fry.tmx [data-info]')) === 'Linkslauf · Stufe 1' && (await text(page, '#cook .ring-big .t b')) === '35:00', 'cook mode shows the Thermomix settings', [await text(page, '#cook .fry.tmx .temp'), await text(page, '#cook .fry.tmx [data-info]')]);
+    await page.click('#cook [data-act="cook-timer"]');
+    await wait(page, 500);
+    ok(/^3[45]:\d\d$/.test(await text(page, '#cook .ring-big .t b')) && await page.locator('#cook [data-act="timer-pause"]').count() === 1 && (await text(page, '#cook .fry.tmx [data-info]')) === 'Linkslauf · Stufe 1', 'Thermomix timer in cook mode');
+    await page.click('#cook [data-act="cook-close"]');
+    await wait(page, 300);
+    await closeSheet(page);
+    await page.click('#timer [data-act="timer-stop"]');
+    // form: edit a Thermomix step, add one
+    await page.click('#book .grid .card[data-dish="milchreis"]');
+    await wait(page, 700);
+    await page.click('#sheet [data-act="r-edit"]');
+    await wait(page, 500);
+    const first = page.locator('#sheet .step-edit').first();
+    ok(await first.locator('[data-dev][value="tm"]').isChecked() && await first.locator('[data-tm-min]').inputValue() === '35' && await first.locator('[data-tm-temp]').inputValue() === '90' && await first.locator('[data-tm-speed]').inputValue() === '1' && await first.locator('[data-tm-rev]').isChecked(), 'form shows the Thermomix settings');
+    await first.locator('[data-tm-min]').fill('30');
+    await page.click('#sheet [data-act="add-step"]');
+    await wait(page, 300);
+    const last = page.locator('#sheet .step-edit').last();
+    await last.locator('textarea').fill('Zimt und Zucker mischen.');
+    await last.locator('[data-dev][value="tm"]').check();
+    ok(await last.locator('.tm-fields').isVisible() && !(await last.locator('.af-fields:not(.tm-fields)').isVisible()), 'choosing Thermomix shows its fields');
+    await last.locator('[data-tm-min]').fill('0');
+    await last.locator('[data-tm-sec]').fill('10');
+    await last.locator('[data-tm-temp]').selectOption('');
+    await last.locator('[data-tm-speed]').selectOption('turbo');
+    await last.locator('[data-tm-label]').fill('Zimtzucker');
+    await page.click('#dishForm button[type="submit"]');
+    await wait(page, 500);
+    let d = await docs(page);
+    const mr = d['dishes/milchreis'];
+    const lastStep = mr && mr.steps[mr.steps.length - 1];
+    ok(mr && mr.steps[0].tm && mr.steps[0].tm.sec === 1800 && mr.steps[0].tm.temp === 90 && mr.steps[0].tm.rev === true, 'edited Thermomix step saved', mr && mr.steps[0]);
+    ok(lastStep && lastStep.tm && lastStep.tm.sec === 10 && lastStep.tm.temp === null && lastStep.tm.speed === 'turbo' && lastStep.tm.label === 'Zimtzucker', 'new Thermomix step saved', lastStep);
+    ok(mr && mr.steps[2] && mr.steps[2].af && !mr.steps[2].tm, 'the Cosori step stays a Cosori step', mr && mr.steps[2]);
+    // Cookidoo links carry no name
+    await page.click('#v-book [data-act="filter"][data-f="alle"]');
+    await wait(page, 300);
+    await page.click('#book .promo [data-act="import"]');
+    await wait(page, 500);
+    await page.click('#sheet [data-act="imp-mode"][data-mode="paste"]');
+    await page.fill('#impText', 'https://cookidoo.de/recipes/recipe/de-DE/r145196');
+    ok((await text(page, '#impHint')).startsWith('Cookidoo-Links verraten den Namen'), 'a Cookidoo link alone asks for the name', await text(page, '#impHint'));
+    await page.click('#sheet [data-act="imp-go"]');
+    await wait(page, 200);
+    ok((await text(page, '#sheet .status')).includes('Namen'), 'converting it asks for the name first', await text(page, '#sheet .status'));
+    await page.evaluate((r) => { window.__sampleReply = Object.assign({}, r, { t: 'Gulaschsuppe', name: 'Gulaschsuppe' }); }, RECIPE);
+    await page.fill('#impText', 'Schau dir dieses Rezept an: Gulaschsuppe https://cookidoo.de/recipes/recipe/de-DE/r145196');
+    ok((await text(page, '#impHint')).includes('„Gulaschsuppe“'), 'the name next to the link is used', await text(page, '#impHint'));
+    await page.click('#sheet [data-act="imp-go"]');
+    await page.waitForSelector('#dishForm', { timeout: 4000 }).catch(() => {});
+    const p2 = await page.evaluate(() => window.__lastPrompt);
+    ok(p2.includes('"Gulaschsuppe"') && p2.includes('Thermomix-Rezept von Cookidoo'), 'prompt asks for a Thermomix recipe', p2.slice(0, 300));
+    ok(await page.locator('#sheet .step-edit [data-dev][value="tm"]:checked').count() === 2, 'Thermomix steps from Claude land in the form');
+    await page.click('#dishForm button[type="submit"]');
+    await wait(page, 500);
+    d = await docs(page);
+    const gu = Object.entries(d).find(([k, v]) => k.startsWith('dishes/') && v.t === 'Gulaschsuppe');
+    ok(gu && gu[1].src && /cookidoo/.test(gu[1].src.url) && gu[1].steps[0].tm && gu[1].steps[0].tm.speed === 5, 'saved with its source and Thermomix steps', gu && gu[1].steps);
+    ok(gu && (await text(page, `#book .grid .card[data-dish="${gu[0].split('/')[1]}"] .gpill`)) === 'Cookidoo', 'card is tagged Cookidoo');
+    // settings
+    await page.click('.tabbar [data-tab="plan"]');
+    await page.locator('#v-plan .nav [data-act="settings"]').click();
+    await wait(page, 600);
+    ok(await page.locator('#sheet .rules.tm li').count() === 7, 'settings list the Thermomix basics');
+    await closeSheet(page);
+    ok(!errors.length, 'no page errors (H)', errors);
+    await ctx.close();
+  }
+
   console.log('F. first start and layout');
   {
     const { page, errors, ctx } = await newPage(browser, Object.assign({ onboarding: true }, phone), seedScript() + MOCK + SAMPLE_IMAGES);
@@ -937,6 +1048,14 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await wait(page, 700);
     const so = await page.evaluate(() => { const s = document.getElementById('sheet'); return s.scrollWidth - s.clientWidth; });
     if (so > 1) over.push(['sheet', so]);
+    await page.click('#sheet [data-act="rtab"][data-tab="steps"]');
+    await wait(page, 200);
+    const ss = await page.evaluate(() => { const s = document.getElementById('sheet'); return s.scrollWidth - s.clientWidth; });
+    if (ss > 1) over.push(['steps', ss]);
+    await page.click('#sheet [data-act="r-edit"]');
+    await wait(page, 600);
+    const fo = await page.evaluate(() => { const s = document.getElementById('sheet'); return s.scrollWidth - s.clientWidth + Math.max(0, ...[...document.querySelectorAll('#sheet .step-bar')].map((b) => b.scrollWidth - b.clientWidth)); });
+    if (fo > 1) over.push(['form', fo]);
     ok(!over.length && !errors.length, `no sideways scrolling at ${vp.width}px`, [over, errors]);
     await ctx.close();
   }

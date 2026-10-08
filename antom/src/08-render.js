@@ -116,7 +116,7 @@ function renderToday() {
       <div class="hero-top"><span class="gpill">${icon(main ? 'fork' : 'sun')}Heute · ${main ? 'Hauptessen' : 'Frühstück'}</span>${S.favs[d.id] ? `<span class="gpill" aria-label="Favorit">${icon('heart', 'fill')}</span>` : ''}</div>
       <div class="hero-body">
         <h2 class="hero-title">${esc(d.t)}</h2>
-        <p class="hero-meta">${d.time ? `<span>${icon('clock')}${esc(d.time)} Min</span>` : ''}${af ? `<span>${icon('flame')}Cosori ${esc(af.c)} °C</span>` : ''}<span>${icon('users')}${n}</span></p>
+        <p class="hero-meta">${d.time ? `<span>${icon('clock')}${esc(d.time)} Min</span>` : ''}${af ? `<span>${icon('flame')}${tmCount(d) ? '' : 'Cosori '}${esc(af.c)} °C</span>` : ''}${tmCount(d) ? `<span>${icon('tm')}Thermomix</span>` : ''}<span>${icon('users')}${n}</span></p>
         <div class="hero-actions"><button class="btn white" type="button" data-act="cook" data-uid="${esc(hero.u)}" data-dish="${esc(d.id)}">${icon('play', 'fill')}Kochen</button><button class="btn glassy" type="button" data-act="open-entry" data-uid="${esc(hero.u)}">Rezept</button></div>
       </div>
     </div>${sub.length ? `<div class="group hero-sub">${sub.join('')}</div>` : ''}`;
@@ -149,7 +149,7 @@ function mealHTML(e, key, slot) {
   const serv = e.s && e.s !== S.settings.people ? `<span>${icon('users')}${e.s}</span>` : '';
   return `<div class="meal" role="button" tabindex="0" data-act="open-entry" data-uid="${esc(e.u)}" data-dish="${esc(d.id)}" aria-label="${esc(`${dayName(key)}, ${SLOT[slot].name}: ${d.t}`)}">
     ${thumbHTML(d)}
-    <span class="meal-txt"><small>${SLOT[slot].name}</small><b class="nm">${esc(d.t)}</b><span class="meta">${d.time ? `<span>${icon('clock')}${esc(d.time)} Min</span>` : ''}${af ? `<span class="heat">${icon('flame')}${esc(af.c)} °C</span>` : ''}${serv}${S.favs[d.id] ? `<span class="fav-dot" aria-label="Favorit">${icon('heart', 'fill')}</span>` : ''}</span></span>
+    <span class="meal-txt"><small>${SLOT[slot].name}</small><b class="nm">${esc(d.t)}</b><span class="meta">${d.time ? `<span>${icon('clock')}${esc(d.time)} Min</span>` : ''}${af ? `<span class="heat">${icon('flame')}${esc(af.c)} °C</span>` : ''}${tmCount(d) ? `<span class="tmk" title="Mit Thermomix">${icon('tm')}TM</span>` : ''}${serv}${S.favs[d.id] ? `<span class="fav-dot" aria-label="Favorit">${icon('heart', 'fill')}</span>` : ''}</span></span>
     ${icon('chevron-right', 'chev')}
   </div>`;
 }
@@ -194,7 +194,7 @@ function renderShelf() {
 /* cookbook */
 function srcTag(d) {
   if (d.builtin) return '';
-  const t = d.origin === 'scan' ? 'Foto' : d.src && /chefkoch\.de/i.test(d.src.url || '') ? 'Chefkoch' : d.src && d.src.url ? 'Import' : 'Eigenes';
+  const t = d.origin === 'scan' ? 'Foto' : d.src && /chefkoch\.de/i.test(d.src.url || '') ? 'Chefkoch' : d.src && /cookidoo\./i.test(d.src.url || '') ? 'Cookidoo' : d.src && d.src.url ? 'Import' : 'Eigenes';
   return `<span class="gpill">${t}</span>`;
 }
 const CAT_ONE = { fruehstueck: 'Frühstück', haupt: 'Hauptgericht', leicht: 'Salat & Brotzeit', suess: 'Süßes' };
@@ -206,15 +206,15 @@ function cardHTML(d, cap) {
     <span class="card-k">${esc(CAT_ONE[catOf(d)])}</span><span class="card-t">${esc(d.t)}</span><span class="card-m">${esc(meta)}</span>
   </button>`;
 }
-const filterOk = (d, f) => f === 'alle' || d.cat === f || (f === 'fav' && S.favs[d.id]) || (f === 'veg' && d.veg) || (f === 'quick' && d.time && d.time <= 20) || (f === 'cosori' && firstAf(d)) || (f === 'eigene' && !d.builtin);
+const filterOk = (d, f) => f === 'alle' || d.cat === f || (f === 'fav' && S.favs[d.id]) || (f === 'veg' && d.veg) || (f === 'quick' && d.time && d.time <= 20) || (f === 'cosori' && firstAf(d)) || (f === 'tm' && tmCount(d)) || (f === 'eigene' && !d.builtin);
 function promoHTML() {
   if (canScan()) {
     return `<section class="promo" aria-label="Rezept scannen">${imgOf('scan-card', 'm', ' loading="lazy"')}<span class="gpill">${icon('sparkle')}Mit Claude</span>
-      <div class="promo-body"><h2>Rezept scannen</h2><p>Kochbuch, Zeitschrift, Rezeptkarte oder ein fertiges Gericht – Antom legt das Rezept mit Einkaufsliste und Cosori-Schritt an.</p>
+      <div class="promo-body"><h2>Rezept scannen</h2><p>Kochbuch, Zeitschrift, Rezeptkarte oder ein fertiges Gericht – Antom legt das Rezept mit Einkaufsliste und den Schritten für Cosori und Thermomix an.</p>
       <div class="acts"><button class="btn white" type="button" data-act="scan">${icon('camera')}Foto aufnehmen</button><button class="btn glassy" type="button" data-act="import">Von Chefkoch</button></div></div></section>`;
   }
   return `<section class="promo" aria-label="Rezept übernehmen">${imgOf('scan-card', 'm', ' loading="lazy"')}<span class="gpill">${icon('book')}Kochbuch</span>
-    <div class="promo-body"><h2>Neue Rezepte</h2><p>Von Chefkoch übernehmen oder selbst eintragen – mit Einkaufsliste und Cosori-Schritt.</p>
+    <div class="promo-body"><h2>Neue Rezepte</h2><p>Von Chefkoch oder Cookidoo übernehmen oder selbst eintragen – mit Einkaufsliste und Schritten für Cosori und Thermomix.</p>
     <div class="acts"><button class="btn white" type="button" data-act="import">${icon('download')}Von Chefkoch</button><button class="btn glassy" type="button" data-act="new-dish">Selbst eintragen</button></div></div></section>`;
 }
 function shelfHTML(title, list, capFn, more) {
@@ -235,7 +235,7 @@ function weeklyPick(all) {
 function featureHTML(d) {
   const af = firstAf(d);
   return `<button type="button" class="feature" data-act="open-dish" data-dish="${esc(d.id)}" aria-label="Rezept der Woche: ${esc(d.t)}">${photoHTML(d, 'l')}<span class="tag">${icon('sparkle')}Rezept der Woche</span>
-    <h2>${esc(d.name && d.name.length < 34 ? d.name : d.t)}</h2><p>${[d.time ? `${d.time} Min` : '', af ? `Cosori ${af.c} °C` : '', d.veg ? 'vegetarisch' : ''].filter(Boolean).join(' · ')}</p></button>`;
+    <h2>${esc(d.name && d.name.length < 34 ? d.name : d.t)}</h2><p>${[d.time ? `${d.time} Min` : '', af ? `Cosori ${af.c} °C` : '', tmCount(d) ? 'Thermomix' : '', d.veg ? 'vegetarisch' : ''].filter(Boolean).join(' · ')}</p></button>`;
 }
 const CAT_PHOTO = { fruehstueck: 'joghurt', haupt: 'tikka', leicht: 'mozza', suess: 'milchreis' };
 const CAT_TILE = { fruehstueck: 'Frühstück', haupt: 'Hauptgerichte', leicht: 'Salate & Brotzeit', suess: 'Süßes' };
@@ -246,7 +246,7 @@ function renderBook() {
   const favs = all.filter((d) => S.favs[d.id]).sort((a, b) => S.favs[b.id] - S.favs[a.id]);
   if (UI.filter === 'eigene' && !own) UI.filter = 'alle';
   if (UI.filter === 'fav' && !favs.length) UI.filter = 'alle';
-  $('#bookCap').textContent = `${plural(all.length, 'Rezept', 'Rezepte')} · ${all.filter((d) => firstAf(d)).length} mit Cosori`;
+  $('#bookCap').textContent = `${plural(all.length, 'Rezept', 'Rezepte')} · ${all.filter((d) => firstAf(d)).length} Cosori · ${all.filter((d) => tmCount(d)).length} Thermomix`;
   $('#cats').innerHTML = CATS.map(([k]) => `<button type="button" class="cat-tile" data-act="filter" data-f="${UI.filter === k ? 'alle' : k}" aria-pressed="${UI.filter === k}" style="--c:var(--cat-${k})">${imgOf(CAT_PHOTO[k], 'm')}<b>${CAT_TILE[k]}</b><small>${plural(all.filter((d) => catOf(d) === k).length, 'Rezept', 'Rezepte')}</small></button>`).join('');
   $('#chips').innerHTML = FILTERS.filter(([k]) => !CAT[k] && (k !== 'eigene' || own) && (k !== 'fav' || favs.length))
     .map(([k, l]) => `<button type="button" class="chip" data-act="filter" data-f="${k}" aria-pressed="${UI.filter === k}">${k === 'fav' ? icon('heart', 'fill') : ''}${l}</button>`).join('');

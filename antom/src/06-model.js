@@ -1,11 +1,36 @@
 
 /* ---------- dish model ---------- */
+// a step is plain, a Cosori step (af) or a Thermomix step (tm) – never both
 function normSteps(steps) {
   return (Array.isArray(steps) ? steps : []).map((s) => {
-    if (Array.isArray(s)) return { t: String(s[1] || ''), af: s[0] || null };
-    if (typeof s === 'string') return { t: s, af: null };
-    return { t: String((s && s.t) || ''), af: (s && s.af) || null };
-  }).filter((s) => s.t || s.af);
+    if (Array.isArray(s)) {
+      const x = s[0];
+      return x && x.tm ? { t: String(s[1] || ''), af: null, tm: normTm(x.tm) } : { t: String(s[1] || ''), af: x || null, tm: null };
+    }
+    if (typeof s === 'string') return { t: s, af: null, tm: null };
+    const af = (s && s.af) || null;
+    return { t: String((s && s.t) || ''), af, tm: af ? null : normTm(s && s.tm) };
+  }).filter((s) => s.t || s.af || s.tm);
+}
+// Thermomix settings from the recipes, the form, the database or Claude:
+// { label, sec, temp: null | 37–160 | 'varoma', speed: 0.5–10 | 'sanft' | 'knet' | 'turbo', rev }
+function normTm(x) {
+  if (!x || typeof x !== 'object') return null;
+  let sec = Math.round(Number(x.sec));
+  if (!(sec > 0)) sec = Math.round((Number(x.min) || 0) * 60 + (Number(x.s) || 0));
+  if (!(sec > 0)) return null;
+  let temp = null;
+  if (typeof x.temp === 'string' && /varoma/i.test(x.temp)) temp = 'varoma';
+  else if (Number(x.temp) >= 37) temp = Math.min(160, Math.round(Number(x.temp)));
+  let speed = x.speed;
+  if (typeof speed === 'string') {
+    const v = speed.toLowerCase();
+    speed = /sanft|rühr|spoon|soft/.test(v) ? 'sanft' : /knet|teig|dough/.test(v) ? 'knet' : /turbo/.test(v) ? 'turbo' : parseFloat(v.replace(/[^\d.,]/g, '').replace(',', '.'));
+  }
+  if (typeof speed === 'number') speed = Number.isFinite(speed) && speed > 0 ? Math.min(10, Math.max(0.5, Math.round(speed * 2) / 2)) : null;
+  if (speed == null) speed = temp ? 1 : null;
+  if (speed == null) return null;
+  return { label: typeof x.label === 'string' ? x.label.trim().slice(0, 40) : '', sec: Math.min(sec, 8 * 3600), temp, speed, rev: !!x.rev };
 }
 const BASE = {};
 for (const d of BUILTIN) {
@@ -34,6 +59,19 @@ function allDishIds() {
 }
 const allDishes = () => allDishIds().map(dish).filter(Boolean);
 const firstAf = (d) => { const s = d && d.steps.find((x) => x.af); return s ? s.af : null; };
+const tmCount = (d) => (d ? d.steps.filter((x) => x.tm).length : 0);
+// "13 Min/100 °C/Linkslauf/Stufe 1", written like the Thermomix shows it
+const TM_SPEED = { sanft: 'Sanftrührstufe', knet: 'Knetstufe', turbo: 'Turbo' };
+function tmTime(sec) {
+  const s = Math.max(1, Math.round(Number(sec) || 0));
+  if (s < 60) return `${s} Sek`;
+  const m = Math.floor(s / 60), r = s % 60;
+  return r ? `${m} Min ${r} Sek` : `${m} Min`;
+}
+const tmTemp = (t) => (t === 'varoma' ? 'Varoma' : t ? `${t} °C` : '');
+const tmSpeed = (sp) => TM_SPEED[sp] || `Stufe ${String(sp).replace('.', ',')}`;
+const tmLine = (tm) => [tmTime(tm.sec), tmTemp(tm.temp), tm.rev ? 'Linkslauf' : '', tmSpeed(tm.speed)].filter(Boolean).join('/');
+const tmClock = (sec) => `${Math.floor(sec / 60)}:${pad2(Math.round(sec) % 60)}`;
 
 /* photos: Higgsfield pictures for the cookbook, the scanned photo for a photographed dish,
    otherwise a laid table for the category with the dish's initial on the plate.

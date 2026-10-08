@@ -1,7 +1,10 @@
-/* ---------- recipes (für 2 Personen, Cosori höchstens 200 °C) ---------- */
+/* ---------- recipes (für 2 Personen, Cosori höchstens 200 °C, Thermomix TM5/TM6/TM7) ---------- */
 const I = (q, u, n, s, o) => Object.assign({ q, u, n, s }, o || {});
 const P = (q, u, n, o) => Object.assign({ q, u, n, s: 'gewuerz', p: 1 }, o || {});
 const A = (label, c, m, sh, pre) => ({ label, c, m, sh: sh || null, pre: !!pre });
+// Thermomix: Dauer in Sekunden, °C oder 'varoma' (null = ohne Hitze), Stufe (Zahl, 'sanft', 'knet', 'turbo'), Linkslauf
+const TMX = (label, sec, temp, speed, rev) => ({ tm: { label, sec, temp: temp || null, speed, rev: !!rev } });
+const MIN = 60;
 
 const BUILTIN = [
   { id: 'joghurt', t: 'Joghurt', pen: 'marker', cat: 'fruehstueck', name: 'Joghurt mit Obst & Knuspermüsli', time: 15,
@@ -16,7 +19,8 @@ const BUILTIN = [
       P(1, 'Prise', 'Zimt'),
     ],
     steps: [
-      'Für das Knuspermüsli Haferflocken, grob gehackte Nüsse, 1 EL Honig, Öl und Zimt in einer Schüssel gut vermischen.',
+      [TMX('Nüsse hacken', 3, null, 5), 'Für das Knuspermüsli die Haselnüsse in den Mixtopf geben und grob hacken.'],
+      [TMX('Müsli mischen', 20, null, 2, true), 'Haferflocken, 1 EL Honig, Öl und Zimt zugeben und vermischen. Klebt Honig am Rand, mit dem Spatel nach unten schieben und kurz wiederholen.'],
       [A('Knuspermüsli rösten', 150, 10, 5), 'Ein passend zugeschnittenes Backpapier in den Korb legen, die Mischung flach darauf verteilen und rösten. Nach 5 Min umrühren, damit nichts zu dunkel wird.'],
       'Auf einem Teller vollständig abkühlen lassen – erst dann wird das Müsli richtig knusprig.',
       'Joghurt auf zwei Schalen verteilen. Banane in Scheiben schneiden und mit den Beeren darauf geben.',
@@ -38,8 +42,8 @@ const BUILTIN = [
     steps: [
       'Am Vorabend Haferflocken mit Milch und Joghurt verrühren und abgedeckt über Nacht in den Kühlschrank stellen.',
       [A('Nüsse rösten', 160, 4, 2), 'Die Nüsse in einer kleinen ofenfesten Form in den Korb stellen und rösten, nach 2 Min schütteln. Danach grob hacken.'],
-      'Morgens den Apfel mit Schale grob raspeln und sofort mit dem Zitronensaft mischen, damit er hell bleibt.',
-      'Apfel und Honig unter die eingeweichten Flocken rühren. Ist das Müsli zu fest, einen Schuss Milch dazugeben.',
+      [TMX('Apfel zerkleinern', 4, null, 4), 'Morgens den Apfel vierteln, entkernen und mit Schale und dem Zitronensaft in den Mixtopf geben. Grob zerkleinern – der Zitronensaft hält ihn hell.'],
+      [TMX('Unterrühren', 15, null, 2, true), 'Die eingeweichten Flocken und den Honig zugeben und unterrühren. Ist das Müsli zu fest, einen Schuss Milch dazugeben.'],
       'In Schalen füllen und mit Beeren und gerösteten Nüssen bestreuen.',
     ],
     tip: 'Die Nüsse gleich für mehrere Tage rösten – im Glas bleiben sie eine Woche knackig.' },
@@ -58,7 +62,7 @@ const BUILTIN = [
     steps: [
       'Apfel vierteln, entkernen und in Spalten schneiden. Mit geschmolzener Butter, Zimt und 1 TL Honig mischen.',
       [A('Zimtäpfel garen', 180, 8, 4), 'Apfelspalten im Korb garen, nach 4 Min schütteln, bis sie weich und leicht karamellisiert sind.'],
-      'Währenddessen Haferflocken mit Milch und einer Prise Salz in einem Topf aufkochen. Bei kleiner Hitze unter Rühren 3–5 Min quellen lassen, bis ein cremiger Brei entsteht.',
+      [TMX('Porridge kochen', 12 * MIN, 90, 2, true), 'Währenddessen Haferflocken, Milch und eine Prise Salz in den Mixtopf geben und cremig kochen. Wer ihn dicker mag, gibt 1–2 Min dazu.'],
       'Porridge in Schalen füllen, Zimtäpfel und gehackte Walnüsse darauf geben und mit dem restlichen Honig beträufeln.',
     ],
     tip: 'Im Herbst schmecken auch Birnen oder Zwetschgen – gleiche Zeit im Cosori.' },
@@ -80,13 +84,15 @@ const BUILTIN = [
       P(null, '', 'Salz & Pfeffer'),
     ],
     steps: [
-      'Linsen in einem Sieb abspülen. Eine Zwiebel fein würfeln, Karotte und Sellerie aus dem Suppengrün klein würfeln (den Lauch für eine Suppe aufheben).',
-      '1 EL Öl im Topf erhitzen, Zwiebel und Gemüse 3 Min andünsten. 2 TL Mehl darüberstäuben und kurz anschwitzen.',
-      'Mit der Brühe ablöschen, Linsen und Lorbeerblatt zugeben und zugedeckt bei kleiner Hitze 30–35 Min weich köcheln. Gelegentlich umrühren und bei Bedarf Wasser nachgießen. Erst salzen, wenn die Linsen weich sind.',
+      'Linsen in einem Sieb abspülen. Eine Zwiebel halbieren, Karotte und Sellerie aus dem Suppengrün in grobe Stücke schneiden (den Lauch für eine Suppe aufheben).',
+      [TMX('Gemüse zerkleinern', 5, null, 5), 'Zwiebel, Karotte und Sellerie in den Mixtopf geben und zerkleinern. Mit dem Spatel nach unten schieben.'],
+      [TMX('Andünsten', 3 * MIN, 120, 1), '1 EL Öl zugeben und das Gemüse andünsten.'],
+      [TMX('Mehl anschwitzen', 1 * MIN, 100, 1), '2 TL Mehl darüberstäuben und kurz anschwitzen.'],
+      [TMX('Linsen garen', 35 * MIN, 100, 'sanft', true), 'Brühe, Linsen und Lorbeerblatt zugeben und weich garen. Das Garkörbchen statt des Messbechers auf den Deckel stellen, dann kann Dampf entweichen. Erst salzen, wenn die Linsen weich sind.'],
       [A('Röstzwiebeln', 170, 10, [3, 6]), 'Für die Röstzwiebeln die zweite Zwiebel in feine Ringe schneiden, mit 1 TL Mehl und 1 EL Öl vermengen und im Cosori knusprig rösten. Alle 3 Min schütteln und am Ende gut aufpassen – sie werden schnell zu dunkel.'],
-      'Die Saitenwürstle in den letzten 5 Min auf die Linsen legen und darin heiß werden lassen. Nicht kochen, sonst platzen sie.',
+      'Die Saitenwürstle in den letzten 5 Min in einem Topf mit heißem, nicht mehr kochendem Wasser ziehen lassen – sonst platzen sie.',
       'Spätzle in einer Pfanne in der Butter schwenken und erwärmen.',
-      'Linsen mit Essig, Senf, Salz und Pfeffer kräftig süß-sauer abschmecken und das Lorbeerblatt entfernen. Mit Spätzle, Würstle und Röstzwiebeln servieren.',
+      [TMX('Abschmecken', 30, null, 'sanft', true), 'Das Lorbeerblatt herausnehmen. Essig, Senf, Salz und Pfeffer zugeben, unterrühren und die Linsen kräftig süß-sauer abschmecken. Mit Spätzle, Würstle und Röstzwiebeln servieren.'],
     ],
     tip: 'Ganz schwäbisch kommt der Essig erst zum Schluss – die Linsen dürfen ruhig deutlich säuerlich schmecken.' },
 
@@ -110,13 +116,15 @@ const BUILTIN = [
       P(null, '', 'Salz & Chiliflocken'),
     ],
     steps: [
-      'Hähnchen in mundgerechte Stücke schneiden. Knoblauch und Ingwer fein reiben.',
-      'Die Hälfte von Knoblauch und Ingwer mit 100 g Joghurt, dem Saft der halben Zitrone, 1 TL Garam Masala, Kurkuma, Paprikapulver und ½ TL Salz verrühren. Das Fleisch darin mindestens 30 Min marinieren, gern auch über Nacht.',
+      'Hähnchen in mundgerechte Stücke schneiden. Knoblauch und Ingwer schälen und die Hälfte davon für die Marinade fein reiben.',
+      'Den geriebenen Knoblauch und Ingwer mit 100 g Joghurt, dem Saft der halben Zitrone, 1 TL Garam Masala, Kurkuma, Paprikapulver und ½ TL Salz verrühren. Das Fleisch darin mindestens 30 Min marinieren, gern auch über Nacht.',
       [A('Hähnchen grillen', 200, 12, 6, true), 'Cosori vorheizen. Die Hähnchenstücke mit etwas Abstand in den Korb legen (überschüssige Marinade abstreifen) und garen, nach 6 Min wenden. Leicht dunkle Ränder sind gewollt – das ist das „Tikka“. Innen darf nichts mehr rosa sein.'],
       'Währenddessen den Reis nach Packungsanleitung kochen.',
-      'Zwiebel fein würfeln und im Öl 5 Min goldbraun braten. Restlichen Knoblauch und Ingwer, Tomatenmark und 1 TL Garam Masala 1 Min mitrösten.',
-      'Tomaten zugeben und 10 Min sämig köcheln lassen. Sahne und den restlichen Joghurt einrühren, mit Salz und Chili abschmecken.',
-      'Hähnchen in die Sauce geben und 2 Min ziehen lassen. Mit Reis und gehacktem Koriander servieren.',
+      [TMX('Zerkleinern', 5, null, 5), 'Für die Sauce die Zwiebel halbieren und mit dem restlichen Knoblauch und Ingwer in den Mixtopf geben. Zerkleinern und mit dem Spatel nach unten schieben.'],
+      [TMX('Andünsten', 4 * MIN, 120, 1), 'Öl, Tomatenmark und 1 TL Garam Masala zugeben und andünsten.'],
+      [TMX('Sauce köcheln', 10 * MIN, 100, 1), 'Tomaten zugeben und sämig köcheln. Das Garkörbchen statt des Messbechers auf den Deckel stellen.'],
+      [TMX('Pürieren', 20, null, 6), 'Sahne und den restlichen Joghurt zugeben und die Sauce mit eingesetztem Messbecher fein pürieren. Mit Salz und Chili abschmecken.'],
+      [TMX('Ziehen lassen', 2 * MIN, 90, 'sanft', true), 'Das Hähnchen in die Sauce geben und darin heiß werden lassen. Mit Reis und gehacktem Koriander servieren.'],
     ],
     tip: 'Vegetarisch: Statt Hähnchen einen kleinen Blumenkohl in Röschen und 1 Dose Kichererbsen marinieren und im Cosori bei 200 °C etwa 15 Min rösten.' },
 
@@ -168,15 +176,16 @@ const BUILTIN = [
       P(null, '', 'Salz, Pfeffer & 1 Prise Zucker'),
     ],
     steps: [
-      'Zwiebel, Karotte und Sellerie sehr fein würfeln, 2 Knoblauchzehen hacken.',
-      'Öl in einem Topf erhitzen und das Hackfleisch darin krümelig und kräftig braun anbraten. Gemüse und Knoblauch zugeben und 5 Min mitbraten.',
-      'Tomatenmark 1 Min mitrösten, mit Rotwein ablöschen und fast vollständig einkochen lassen.',
-      'Passierte Tomaten und Oregano zugeben, mit Salz, Pfeffer und einer Prise Zucker würzen. Zugedeckt bei kleiner Hitze mindestens 30 Min köcheln lassen – länger schadet nicht.',
+      [TMX('Gemüse zerkleinern', 5, null, 5), 'Zwiebel halbieren, Karotte und Sellerie in Stücke schneiden und mit 2 Knoblauchzehen in den Mixtopf geben. Zerkleinern und mit dem Spatel nach unten schieben.'],
+      [TMX('Andünsten', 3 * MIN, 120, 1), 'Öl zugeben und das Gemüse andünsten.'],
+      [TMX('Hack anbraten', 5 * MIN, 120, 1, true), 'Hackfleisch zugeben und krümelig anbraten.'],
+      [TMX('Ablöschen', 3 * MIN, 120, 1, true), 'Tomatenmark und Rotwein zugeben und ohne Messbecher etwas einkochen lassen.'],
+      [TMX('Sauce köcheln', 25 * MIN, 100, 1, true), 'Passierte Tomaten und Oregano zugeben, mit Salz, Pfeffer und einer Prise Zucker würzen und köcheln lassen. Das Garkörbchen statt des Messbechers auf den Deckel stellen. Länger köcheln schadet nicht.'],
       'Spaghetti in reichlich Salzwasser al dente kochen.',
       [A('Knoblauchbrot', 180, 5), 'Für das Knoblauchbrot die weiche Butter mit der letzten gepressten Knoblauchzehe und etwas Salz verrühren. Ciabatta in Scheiben schneiden, bestreichen und im Cosori goldbraun backen.'],
       'Spaghetti mit der Sauce mischen und mit frisch geriebenem Parmesan und dem Knoblauchbrot servieren.',
     ],
-    tip: 'Die Sauce lohnt sich in doppelter Menge: Sie lässt sich portionsweise gut einfrieren.' },
+    tip: 'Die Sauce lohnt sich in doppelter Menge: Sie lässt sich portionsweise gut einfrieren. Noch kräftiger wird sie, wenn ihr das Hack vorher in der Pfanne scharf anbratet.' },
 
   { id: 'pizza', t: 'Pizza', sub: 'Salat', pen: 'caps', cat: 'haupt', name: 'Pizza aus dem Cosori mit grünem Salat', time: 30,
     ing: [
@@ -202,7 +211,7 @@ const BUILTIN = [
       'Für das Dressing 2 EL Olivenöl, Balsamico, Senf, Zucker, Salz und Pfeffer verrühren und erst kurz vor dem Servieren untermischen.',
       'Pizza mit frischem Basilikum und einem Spritzer Olivenöl servieren.',
     ],
-    tip: 'Aus den Teigresten kleine Knoten formen, mit Knoblauchbutter bestreichen und bei 180 °C 6 Min backen – fertig sind Pizzabrötchen.' },
+    tip: 'Teig selbst machen mit dem Thermomix: 150 g Wasser, 10 g frische Hefe und 1 Prise Zucker 2 Min/37 °C/Stufe 2 verrühren, dann 250 g Mehl, ½ TL Salz und 1 EL Olivenöl 2 Min/Knetstufe kneten und abgedeckt 45 Min gehen lassen.' },
 
   { id: 'brotsalat', t: 'Brot-Salat', pen: 'marker', cat: 'leicht', name: 'Brotsalat (Panzanella)', time: 30,
     ing: [
@@ -246,7 +255,8 @@ const BUILTIN = [
       [A('Brokkoli dazugeben', 200, 7), 'Brokkoli zu den Kartoffeln in den Korb geben, kurz durchschütteln und alles zusammen fertig garen. Dann herausnehmen und abgedeckt warm halten.'],
       'Lachs trocken tupfen, mit dem restlichen Öl bestreichen, salzen, pfeffern und mit 2 Zitronenscheiben belegen.',
       [A('Lachs garen', 180, 9), 'Lachs mit der Hautseite nach unten in den Korb legen und garen. Dicke Filets brauchen 10–12 Min – innen darf er noch leicht glasig sein.'],
-      'Für den Dip Joghurt mit gehacktem Dill, etwas Zitronenabrieb, Salz und Pfeffer verrühren. Alles mit Zitronenspalten servieren.',
+      [TMX('Dill hacken', 3, null, 8), 'Für den Dip die Dillspitzen in den Mixtopf geben und fein hacken.'],
+      [TMX('Dip verrühren', 10, null, 3), 'Joghurt, etwas Zitronenabrieb, Salz und Pfeffer zugeben und verrühren. Alles mit Zitronenspalten servieren.'],
     ],
     tip: 'Auch Kabeljau oder Seelachs gelingen so: 180 °C, je nach Dicke 8–10 Min.' },
 
@@ -254,7 +264,7 @@ const BUILTIN = [
     ing: [
       I(2, '', 'Zucchini', 'obst', { x: 'mittelgroß' }),
       I(250, 'g', 'Ricotta', 'kuehl'),
-      I(40, 'g', 'Parmesan', 'kuehl', { x: 'gerieben' }),
+      I(40, 'g', 'Parmesan', 'kuehl', { x: 'am Stück' }),
       I(1, '', 'Ei', 'kuehl', { pl: 'Eier' }),
       I(1, '', 'Knoblauchzehe', 'obst', { pl: 'Knoblauchzehen' }),
       I(1, '', 'Bio-Zitrone', 'obst', { pl: 'Bio-Zitronen', x: 'Abrieb' }),
@@ -266,9 +276,10 @@ const BUILTIN = [
       P(null, '', 'Salz, Pfeffer & Chiliflocken'),
     ],
     steps: [
-      'Zucchini längs halbieren und mit einem Teelöffel aushöhlen, dabei einen 1 cm breiten Rand lassen. Das Fruchtfleisch fein hacken.',
-      'Ricotta mit Ei, der Hälfte des Parmesans, dem gehackten Zucchinifleisch, gepresstem Knoblauch, Zitronenabrieb, gehackten Kräutern, Salz und Pfeffer verrühren.',
-      'Zucchinihälften innen leicht salzen, mit Öl bepinseln und die Ricottamasse einfüllen. Semmelbrösel mit dem restlichen Parmesan mischen und darüberstreuen.',
+      'Zucchini längs halbieren und mit einem Teelöffel aushöhlen, dabei einen 1 cm breiten Rand lassen. Das Fruchtfleisch beiseitestellen.',
+      [TMX('Parmesan & Kräuter', 10, null, 10), 'Parmesan in Stücken, Knoblauch und ein paar Kräuterblättchen in den Mixtopf geben und fein zerkleinern. Die Hälfte davon für die Kruste herausnehmen.'],
+      [TMX('Füllung rühren', 15, null, 4), 'Zucchinifleisch, Ricotta, Ei, Zitronenabrieb, Salz und Pfeffer zugeben und zu einer Füllung verrühren.'],
+      'Zucchinihälften innen leicht salzen, mit Öl bepinseln und die Füllung einfüllen. Semmelbrösel mit der beiseitegestellten Parmesanmischung mischen und darüberstreuen.',
       [A('Zucchini überbacken', 180, 15), 'Zucchini nebeneinander in den Korb setzen (bei kleinem Korb in zwei Durchgängen) und garen, bis die Füllung gestockt und die Kruste goldbraun ist. Die Kirschtomaten in den letzten 5 Min dazulegen.'],
       'Mit frischen Kräutern, einem Spritzer Zitrone und Baguette servieren.',
     ],
@@ -291,7 +302,7 @@ const BUILTIN = [
       P(null, '', 'Salz & Pfeffer'),
     ],
     steps: [
-      'Quinoa in einem Sieb heiß abspülen, mit 300 ml Wasser und etwas Salz aufkochen und zugedeckt 15 Min bei kleiner Hitze quellen lassen.',
+      [TMX('Quinoa garen', 18 * MIN, 100, 4), 'Quinoa im Garkörbchen gründlich abspülen. 1 Liter Wasser und 1 TL Salz in den Mixtopf geben, das Garkörbchen einhängen und die Quinoa garen, bis die Körner weich sind. Abtropfen lassen und mit einer Gabel auflockern.'],
       'Süßkartoffel schälen und in 2-cm-Würfel schneiden. Kichererbsen abgießen und gut trocken tupfen. Beides mit Öl, Paprikapulver, Kreuzkümmel und Salz mischen.',
       [A('Süßkartoffel & Kichererbsen rösten', 200, 18, 9), 'Süßkartoffel und Kichererbsen im Cosori rösten, nach 9 Min schütteln. Die Kichererbsen werden dabei schön knusprig.'],
       'Kürbiskerne in einer Pfanne ohne Fett rösten, bis sie springen.',
@@ -349,7 +360,7 @@ const BUILTIN = [
     ],
     steps: [
       'Bananen schälen und in Stücke brechen.',
-      'Mit Milch, Joghurt, Honig und Zimt im Mixer etwa 30 Sekunden fein pürieren.',
+      [TMX('Pürieren', 30, null, 10), 'Mit Milch, Joghurt, Honig und Zimt in den Mixtopf geben und mit eingesetztem Messbecher fein pürieren.'],
       'Sofort in Gläser füllen und servieren.',
     ],
     tip: 'Besonders cremig wird der Shake mit gefrorenen Bananenstücken – reife Bananen dafür einfach geschält einfrieren.' },
@@ -366,7 +377,7 @@ const BUILTIN = [
       P(1, 'Prise', 'Salz'),
     ],
     steps: [
-      'Milch mit 1 EL Zucker, Vanillezucker und Salz aufkochen. Milchreis einrühren und bei kleinster Hitze zugedeckt 30–35 Min quellen lassen. Öfter umrühren, damit nichts ansetzt.',
+      [TMX('Milchreis garen', 35 * MIN, 90, 1, true), 'Milch, Milchreis, 1 EL Zucker, Vanillezucker und Salz in den Mixtopf geben und cremig garen. Danach 10 Min im Mixtopf nachquellen lassen.'],
       'Zwetschgen halbieren und entsteinen. In einer kleinen ofenfesten Form, die in den Korb passt, mit 1 EL Zucker, Zimt und Butterflöckchen mischen.',
       [A('Zwetschgen garen', 180, 10, 5), 'Zwetschgen im Cosori garen, bis sie weich sind und Saft ziehen. Nach 5 Min umrühren.'],
       'Milchreis in Schalen füllen und die warmen Zwetschgen samt Saft darauf geben.',
@@ -415,9 +426,10 @@ const BUILTIN = [
     steps: [
       'Auberginen in 2-cm-Würfel schneiden und mit 2 EL Olivenöl und etwas Salz mischen.',
       [A('Auberginen rösten', 200, 15, 7), 'Auberginen im Cosori goldbraun rösten, nach 7 Min schütteln. Das ersetzt das klassische Frittieren in viel Öl.'],
-      'Zwiebel und Sellerie würfeln und im restlichen Öl in einer großen Pfanne 5 Min glasig dünsten.',
-      'Tomaten, Kapern und halbierte Oliven zugeben und 10 Min köcheln lassen.',
-      'Essig und Zucker einrühren, die gerösteten Auberginen unterheben und weitere 5 Min ziehen lassen. Mit Salz und Pfeffer süß-sauer abschmecken.',
+      [TMX('Zerkleinern', 4, null, 5), 'Zwiebel halbieren, Sellerie in Stücke schneiden, beides in den Mixtopf geben und zerkleinern. Mit dem Spatel nach unten schieben.'],
+      [TMX('Andünsten', 5 * MIN, 120, 1), 'Das restliche Öl zugeben und glasig dünsten.'],
+      [TMX('Sauce köcheln', 10 * MIN, 100, 1, true), 'Tomaten, Kapern und halbierte Oliven zugeben und köcheln lassen. Das Garkörbchen statt des Messbechers auf den Deckel stellen.'],
+      [TMX('Ziehen lassen', 5 * MIN, 90, 'sanft', true), 'Essig, Zucker und die gerösteten Auberginen zugeben und ziehen lassen. Mit Salz und Pfeffer süß-sauer abschmecken.'],
       'Pinienkerne in einer Pfanne ohne Fett rösten. Caponata lauwarm mit Basilikum, Pinienkernen und frischem Brot servieren.',
     ],
     tip: 'Caponata schmeckt am nächsten Tag noch besser – ideal zum Vorkochen.' },
@@ -459,8 +471,8 @@ const BUILTIN = [
     steps: [
       'Kartoffeln gründlich waschen (die Schale bleibt dran) und in Spalten schneiden. Mit 1 EL Öl, Paprikapulver und Salz mischen.',
       [A('Wedges', 200, 22, [10, 20]), 'Wedges im Cosori goldbraun und knusprig garen, nach 10 und 20 Min schütteln. Den Korb höchstens zur Hälfte füllen.'],
-      'Bohnen putzen und in Salzwasser mit dem Bohnenkraut 8–10 Min bissfest garen, abgießen.',
-      'Zwiebel fein würfeln und in der Butter glasig dünsten. Die Bohnen darin schwenken, salzen und pfeffern.',
+      [TMX('Bohnen dämpfen', 20 * MIN, 'varoma', 1), 'Bohnen putzen und in den Varoma legen. 500 g Wasser in den Mixtopf geben, den Varoma aufsetzen und die Bohnen bissfest dämpfen. Dünne Bohnen schon nach 15 Min probieren.'],
+      'Zwiebel fein würfeln und in einer Pfanne in der Butter glasig dünsten. Die Bohnen mit dem Bohnenkraut darin schwenken, salzen und pfeffern.',
       'Die Eier in einer Pfanne mit dem restlichen Öl als Spiegeleier braten.',
       'Wedges, Bohnen und Spiegeleier zusammen anrichten.',
     ],
@@ -480,7 +492,8 @@ const BUILTIN = [
       P(null, '', 'Salz & Pfeffer'),
     ],
     steps: [
-      'Zwiebeln fein würfeln und mit 4 EL Essig, 3 EL Wasser, 3 EL Öl, Kümmel und Pfeffer zur „Musik“ verrühren.',
+      [TMX('Zwiebeln zerkleinern', 4, null, 5), 'Zwiebeln halbieren, in den Mixtopf geben und fein zerkleinern.'],
+      [TMX('Musik rühren', 10, null, 3, true), '4 EL Essig, 3 EL Wasser, 3 EL Öl, Kümmel und Pfeffer zugeben und zur „Musik“ verrühren.'],
       'Handkäse in eine flache Schale legen, mit der Marinade übergießen und abgedeckt mindestens 1 Std., besser über Nacht, im Kühlschrank ziehen lassen.',
       'Rote Beete schälen (am besten mit Handschuhen) und in Spalten schneiden. Mit 1 EL Öl und etwas Salz mischen.',
       [A('Rote Beete rösten', 200, 25, 12), 'Rote Beete im Cosori rösten, nach 12 Min schütteln. Noch warm mit Honig und 1 EL Essig marinieren.'],
@@ -526,7 +539,8 @@ const BUILTIN = [
       P(null, '', 'Butter', { s: 'kuehl' }),
     ],
     steps: [
-      'Quark, Ei und Salz verrühren. Mehl mit Backpulver mischen und zügig unterkneten, bis ein glatter, leicht klebriger Teig entsteht.',
+      [TMX('Verrühren', 10, null, 4), 'Quark, Ei und Salz in den Mixtopf geben und verrühren.'],
+      [TMX('Teig kneten', 1 * MIN, null, 'knet'), 'Mehl und Backpulver zugeben und zu einem glatten, leicht klebrigen Teig verkneten.'],
       'Mit bemehlten Händen 6 Brötchen formen und oben kreuzweise einschneiden. Die Oberseite mit Wasser bepinseln und in die Kerne drücken.',
       [A('Quarkbrötchen backen', 160, 16), 'Brötchen mit Abstand auf ein Stück Backpapier in den Korb setzen (nicht mit Backpapier vorheizen) und backen, bis sie goldbraun sind und beim Klopfen hohl klingen.'],
       'Etwas abkühlen lassen. Währenddessen Radieschen und Gurke in Scheiben schneiden und den Schnittlauch hacken.',
@@ -541,24 +555,26 @@ const BUILTIN = [
       I(1, '', 'Knoblauchzehe', 'obst', { pl: 'Knoblauchzehen' }),
       I(100, 'ml', 'Weißwein', 'getraenke', { x: 'oder mehr Brühe' }),
       I(150, 'g', 'Babyspinat', 'obst'),
-      I(40, 'g', 'Parmesan', 'kuehl'),
+      I(40, 'g', 'Parmesan', 'kuehl', { x: 'am Stück' }),
       I(200, 'g', 'Kirschtomaten', 'obst'),
       I(2, 'EL', 'Pinienkerne', 'backen'),
       I(1, '', 'Bio-Zitrone', 'obst', { pl: 'Bio-Zitronen' }),
       I(100, 'g', 'Feldsalat', 'obst', { x: 'oder Blattsalat' }),
-      P(700, 'ml', 'Gemüsebrühe', { x: 'heiß' }),
+      P(400, 'ml', 'Gemüsebrühe'),
       P(3, 'EL', 'Olivenöl'),
       P(1, 'EL', 'Balsamico'),
       P(1, 'EL', 'Butter', { s: 'kuehl' }),
       P(null, '', 'Salz & Pfeffer'),
     ],
     steps: [
-      'Schalotte und Knoblauch fein würfeln und in 1 EL Öl glasig dünsten. Den Reis zugeben und 1–2 Min unter Rühren anschwitzen.',
-      'Mit Weißwein ablöschen und einkochen lassen. Dann nach und nach die heiße Brühe angießen und unter Rühren jeweils fast ganz einkochen lassen, insgesamt etwa 18–20 Min.',
+      [TMX('Parmesan reiben', 10, null, 10), 'Parmesan in Stücken in den Mixtopf geben, fein reiben und umfüllen.'],
+      [TMX('Zerkleinern', 3, null, 5), 'Schalotte und Knoblauch in den Mixtopf geben und zerkleinern. Mit dem Spatel nach unten schieben.'],
+      [TMX('Andünsten', 3 * MIN, 120, 1), '1 EL Öl zugeben und andünsten.'],
+      [TMX('Reis anschwitzen', 2 * MIN, 120, 1, true), 'Den Reis zugeben und anschwitzen.'],
+      [TMX('Risotto garen', 14 * MIN, 100, 1, true), 'Weißwein und Brühe zugeben und garen, bis der Reis cremig ist, aber noch Biss hat. Das Garkörbchen statt des Messbechers auf den Deckel stellen.'],
       [A('Kirschtomaten schmoren', 190, 8), 'Währenddessen die Kirschtomaten mit 1 TL Öl und etwas Salz mischen und im Cosori schmoren, bis sie aufplatzen.'],
       'Pinienkerne in einer Pfanne ohne Fett goldbraun rösten.',
-      'Den Spinat in den letzten 2 Min unter das Risotto heben und zusammenfallen lassen.',
-      'Topf vom Herd nehmen, Butter und Parmesan unterrühren und mit Salz, Pfeffer und etwas Zitronenabrieb abschmecken. 2 Min ruhen lassen.',
+      'Das Risotto in eine große Schüssel füllen. Spinat, Butter und Parmesan unterheben – der Spinat fällt in der Hitze zusammen. Mit Salz, Pfeffer und etwas Zitronenabrieb abschmecken und 2 Min ruhen lassen.',
       'Salat mit dem restlichen Öl, Balsamico, Salz und Pfeffer anmachen. Risotto mit Röst-Tomaten, Pinienkernen und dem Salat servieren.',
     ],
     tip: 'Das Risotto soll cremig fließen wie eine kleine Welle. Lieber noch einen Schluck Brühe dazugeben.' },
@@ -570,7 +586,7 @@ const BUILTIN = [
       I(2, 'EL', 'Kapern', 'konserve'),
       I(30, 'g', 'Semmelbrösel', 'trocken', { x: 'gern Panko' }),
       I(1, '', 'Knoblauchzehe', 'obst', { pl: 'Knoblauchzehen' }),
-      I(50, 'g', 'Parmesan', 'kuehl'),
+      I(50, 'g', 'Parmesan', 'kuehl', { x: 'am Stück' }),
       I(1, 'Bund', 'Petersilie', 'obst'),
       I(100, 'g', 'Rucola', 'obst', { x: 'oder Feldsalat' }),
       P(3, 'EL', 'Olivenöl'),
@@ -580,6 +596,8 @@ const BUILTIN = [
     steps: [
       'Kapern gut abtropfen lassen und trocken tupfen. Semmelbrösel mit 1 EL Olivenöl und dem fein gehackten Knoblauch mischen.',
       [A('Kapern & Brösel rösten', 180, 6, 3), 'Kapern und Brösel in zwei kleinen ofenfesten Schälchen in den Korb stellen und knusprig rösten, nach 3 Min umrühren.'],
+      [TMX('Parmesan reiben', 10, null, 10), 'Parmesan in Stücken in den Mixtopf geben, fein reiben und umfüllen.'],
+      [TMX('Petersilie hacken', 3, null, 8), 'Die Petersilienblättchen in den Mixtopf geben und hacken.'],
       'Pasta in reichlich Salzwasser al dente kochen. Vor dem Abgießen eine Tasse Nudelwasser abschöpfen.',
       'Den Abrieb beider Zitronen und den Saft einer Zitrone mit Butter und geriebenem Parmesan im warmen Nudeltopf verrühren. Pasta und 4–6 EL Nudelwasser zugeben und kräftig schwenken, bis eine cremige Sauce entsteht.',
       'Mit Salz, Pfeffer und Chili abschmecken und mit Petersilie, knusprigen Kapern und Zitronenbröseln servieren.',
@@ -625,6 +643,15 @@ const COSORI_RULES = [
   'Die Zeiten gelten für einen Korb mit etwa 5,5 Litern. Bei kleineren Modellen in Portionen garen und die letzten Minuten einmal nachsehen.',
   'Vorheizen lohnt sich bei Fleisch, Fisch und Pizza. Gemüse und Nüsse können direkt starten.',
   'Alle Rezepte bleiben bei höchstens 200 °C, das schafft jedes Cosori-Modell.',
+];
+const TM_RULES = [
+  'Zwiebeln, Knoblauch und Gemüse halbiert oder in groben Stücken in den Mixtopf geben, 3–5 Sek/Stufe 5 zerkleinern und mit dem Spatel nach unten schieben.',
+  'Angedünstet wird beim TM5, TM6 und TM7 mit 120 °C auf Stufe 1. Der ältere TM31 schafft nur 100 °C – dort zum Andünsten die Varoma-Temperatur wählen.',
+  'Linkslauf schont alles, was stückig bleiben soll: Fleisch, Reis, Linsen und Gemüsestücke.',
+  'Zum Einkochen das Garkörbchen statt des Messbechers auf den Deckel stellen – so entweicht Dampf, ohne dass es spritzt.',
+  'Beim Pürieren heißer Speisen immer den Messbecher einsetzen.',
+  'Der Mixtopf fasst höchstens 2,2 Liter. Für mehr Personen in zwei Durchgängen kochen.',
+  'Zum Dampfgaren im Varoma mindestens 500 g Wasser in den Mixtopf geben – das reicht für etwa 30 Minuten.',
 ];
 
 /* the week as it hangs on the fridge – used only for a device without shared storage */

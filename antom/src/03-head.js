@@ -69,7 +69,7 @@ const UNIT_PL = { Dose: 'Dosen', Kugel: 'Kugeln', Zehe: 'Zehen', Scheibe: 'Schei
 const COUNTABLE = new Set(['', 'Stück', 'Bund', 'Dose', 'Pck', 'Kugel', 'Topf', 'Rolle', 'Kästchen', 'Becher', 'Glas', 'Packung', 'Knolle']);
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const MONTHS_SHORT = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
-const FILTERS = [['alle', 'Alle'], ['fav', 'Favoriten'], ['fruehstueck', 'Frühstück'], ['haupt', 'Hauptgerichte'], ['leicht', 'Salate & Brotzeit'], ['suess', 'Süßes'], ['veg', 'Vegetarisch'], ['quick', 'Bis 20 Min'], ['cosori', 'Mit Cosori'], ['eigene', 'Eigene']];
+const FILTERS = [['alle', 'Alle'], ['fav', 'Favoriten'], ['fruehstueck', 'Frühstück'], ['haupt', 'Hauptgerichte'], ['leicht', 'Salate & Brotzeit'], ['suess', 'Süßes'], ['veg', 'Vegetarisch'], ['quick', 'Bis 20 Min'], ['cosori', 'Mit Cosori'], ['tm', 'Mit Thermomix'], ['eigene', 'Eigene']];
 
 const dayOf = (date) => DAYS[(date.getDay() + 6) % 7];
 const dayName = (key) => dayOf(fromKey(key)).name;
