@@ -1,0 +1,3 @@
+# Für `npm run dev`: als .dev.vars speichern (wird nicht eingecheckt)
+FAMILY_KEY=hier-ein-langer-zufaelliger-schluessel-mindestens-16-zeichen
+ANTHROPIC_API_KEY=sk-ant-...

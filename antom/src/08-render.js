@@ -21,7 +21,10 @@ function flushRender() {
 function renderAll() { renderParts = new Set(['plan', 'book', 'shop']); if (!S.dragging) { cancelAnimationFrame(renderFrame); flushRender(); } }
 
 function renderChrome() {
-  const label = S.mode === 'shared' ? 'Familienplan' : S.mode === 'local' ? 'Auf diesem Gerät' : 'Verbinde …';
+  const web = S.mode === 'shared' && window.antomWeb ? window.antomWeb.state() : null;
+  const label = web && !web.online ? (web.pending ? 'Offline – kommt später' : 'Familienplan · offline')
+    : web && web.pending ? 'Wird gespeichert …'
+    : S.mode === 'shared' ? 'Familienplan' : S.mode === 'local' ? 'Auf diesem Gerät' : 'Verbinde …';
   for (const el of $$('[data-sync]')) el.textContent = label;
   const open = shopCounts().open;
   for (const el of $$('[data-count]')) el.textContent = open ? String(open) : '';

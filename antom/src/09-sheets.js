@@ -719,6 +719,10 @@ function claudeError(e) {
   if (code === 'sampling_disabled' || code === 'not_declared' || code === 'capability_disabled') { sampleFn = null; queueRender('plan', 'book'); return 'Claude ist hier nicht verfügbar. Ihr könnt das Rezept trotzdem selbst eintragen.'; }
   if (code === 'capability_removed') return 'Diese Version der Claude-App kann das noch nicht. Bitte die App aktualisieren oder Antom im Browser öffnen.';
   if (code === 'rate_limited') return 'Claude ist gerade ausgelastet. Bitte in ein paar Minuten noch einmal versuchen.';
+  if (code === 'daily_limit') return 'Für heute sind die Claude-Anfragen aufgebraucht. Morgen geht es wieder – selbst eintragen klappt immer.';
+  if (code === 'no_credit') return 'Das Guthaben für Claude ist aufgebraucht. Wer Antom eingerichtet hat, kann es auf platform.claude.com aufladen – selbst eintragen klappt immer.';
+  if (code === 'not_configured') return 'Claude ist für diese App noch nicht eingerichtet (der API-Schlüssel fehlt). Ihr könnt das Rezept aber selbst eintragen.';
+  if (code === 'offline') return 'Keine Internetverbindung. Bitte gleich noch einmal versuchen.';
   if (code === 'session_expired') return 'Bitte bei Claude neu anmelden und dann noch einmal versuchen.';
   if (code === 'invalid_json') return 'Die Antwort war unvollständig. Bitte noch einmal versuchen.';
   if (code === 'image_rejected') return 'Ein Bild ließ sich nicht lesen (zum Beispiel ein HEIC-Foto). Bitte einen Screenshot oder ein anderes Foto wählen.';

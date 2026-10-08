@@ -1,0 +1,5 @@
+{"app":"antom","version":1,"exported":1791400000000,"docs":{
+"days/2026-10-12":{"f":[{"u":"bk-f1","d":"porridge"}],"h":[{"u":"bk-h1","d":"cbackup01"}]},
+"dishes/cbackup01":{"t":"Testgericht","name":"Testgericht aus der Sicherung","cat":"haupt","time":20,"sv":2,"veg":true,"ing":[{"q":200,"u":"g","n":"Nudeln","s":"trocken"}],"steps":[{"t":"Nudeln kochen.","af":null}],"tip":"","updated":1791400000000},
+"meta/settings":{"people":3}
+}}

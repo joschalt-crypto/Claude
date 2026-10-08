@@ -122,6 +122,9 @@ setInterval(() => { if (todayKey() !== lastDay) { const wasCur = +UI.week === +m
 
 /* ---------- boot ---------- */
 document.documentElement.lang = 'de';
+// the web app: keep itself on the phone for offline starts, show the sync state
+if (window.antomWeb && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+window.addEventListener('antom-sync', () => renderChrome());
 for (const el of $$('img[data-photo]')) el.src = photoUrl(el.dataset.photo, 'm');
 initSortables();
 renderAll();

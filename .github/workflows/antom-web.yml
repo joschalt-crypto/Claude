@@ -1,0 +1,159 @@
+# Veröffentlicht Antom als eigene Web-App bei Cloudflare, sobald sich auf dem Zweig
+# claude/antom-app etwas unter antom/ ändert, oder per Hand (Actions → Antom Web-App →
+# Re-run). Einrichtung Schritt für Schritt: antom/server/EINRICHTUNG.md
+#
+# GitHub-Secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID  nötig zum Veröffentlichen
+#   ANTOM_FAMILY_KEY                             Familienschlüssel im Einladungslink
+#   ANTHROPIC_API_KEY                            für „Mit Claude umwandeln“ und den Foto-Scan
+# Das Repository ist öffentlich: Schlüssel erscheinen nie im Log, in der Zusammenfassung
+# steht nur die Adresse ohne Familienschlüssel.
+name: Antom Web-App
+
+on:
+  push:
+    branches: [claude/antom-app]
+    paths:
+      - 'antom/**'
+      - '.github/workflows/antom-web.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: antom-web
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    name: Einrichtung prüfen
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ANTOM_FAMILY_KEY: ${{ secrets.ANTOM_FAMILY_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning title=Antom ist noch nicht eingerichtet::Es fehlen die GitHub-Secrets CLOUDFLARE_API_TOKEN und/oder CLOUDFLARE_ACCOUNT_ID. Anleitung: antom/server/EINRICHTUNG.md"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # spaces or line breaks at the ends happen when copying; anything else must fit
+          trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; s="${s%"${s##*[![:space:]]}"}"; printf '%s' "$s"; }
+          key="$(trim "$ANTOM_FAMILY_KEY")"
+          if [ -n "$key" ] && ! [[ "$key" =~ ^[A-Za-z0-9_-]{16,128}$ ]]; then
+            echo "::error title=Familienschlüssel passt nicht::ANTOM_FAMILY_KEY braucht 16 bis 128 Zeichen und darf nur Buchstaben (ohne Umlaute), Ziffern, - und _ enthalten."
+            exit 1
+          fi
+          # placeholders from the guide or the examples are not a key
+          if [ -n "$key" ] && { [[ "$key" =~ ^[xX_-]+$ ]] || [[ "$key" == hier-ein-langer-* ]] || [[ "$key" == test-family-key-* ]]; }; then
+            echo "::error title=Familienschlüssel ist ein Platzhalter::Bitte einen eigenen, zufälligen Familienschlüssel erzeugen (Schritt 3 der Anleitung)."
+            exit 1
+          fi
+          [ -n "$key" ] || echo "::warning title=Familienschlüssel fehlt::Ohne das Secret ANTOM_FAMILY_KEY ist die App nicht erreichbar."
+          [ -n "$ANTHROPIC_API_KEY" ] || echo "::warning title=Claude ist nicht eingerichtet::Ohne das Secret ANTHROPIC_API_KEY funktionieren „Mit Claude umwandeln“ und der Foto-Scan nicht. Alles andere läuft."
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Bei Cloudflare veröffentlichen
+    needs: check
+    if: needs.check.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: antom/server
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: antom/server/package-lock.json
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Fotos bereitlegen
+        run: npm run assets
+
+      - name: Veröffentlichen
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ANTOM_FAMILY_KEY: ${{ secrets.ANTOM_FAMILY_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: |
+          trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; s="${s%"${s##*[![:space:]]}"}"; printf '%s' "$s"; }
+          export CLOUDFLARE_API_TOKEN="$(trim "$CLOUDFLARE_API_TOKEN")"
+          export CLOUDFLARE_ACCOUNT_ID="$(trim "$CLOUDFLARE_ACCOUNT_ID")"
+          export ANTOM_FAMILY_KEY="$(trim "$ANTOM_FAMILY_KEY")"
+          export ANTHROPIC_API_KEY="$(trim "$ANTHROPIC_API_KEY")"
+          for v in "$CLOUDFLARE_API_TOKEN" "$CLOUDFLARE_ACCOUNT_ID" "$ANTOM_FAMILY_KEY" "$ANTHROPIC_API_KEY"; do
+            [ -n "$v" ] && echo "::add-mask::$v"
+          done
+
+          # the keys go up together with the code; secrets that are not set stay as they are
+          umask 077
+          secrets="$RUNNER_TEMP/antom-secrets.json"
+          node -e '
+            const s = {};
+            if (process.env.ANTOM_FAMILY_KEY) s.FAMILY_KEY = process.env.ANTOM_FAMILY_KEY;
+            if (process.env.ANTHROPIC_API_KEY) s.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+            process.stdout.write(JSON.stringify(s));
+          ' > "$secrets"
+          npx wrangler deploy --secrets-file "$secrets" 2>&1 | tee "$RUNNER_TEMP/deploy.log"
+          rm -f "$secrets"
+
+          url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' "$RUNNER_TEMP/deploy.log" | head -n 1 || true)"
+          echo "url=$url" >> "$GITHUB_ENV"
+
+      - name: Prüfen, ob die App antwortet
+        env:
+          ANTOM_FAMILY_KEY: ${{ secrets.ANTOM_FAMILY_KEY }}
+        run: |
+          trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; s="${s%"${s##*[![:space:]]}"}"; printf '%s' "$s"; }
+          key="$(trim "$ANTOM_FAMILY_KEY")"
+          [ -n "$key" ] && echo "::add-mask::$key"
+          if [ -z "$url" ]; then
+            echo "::warning::Die Adresse auf workers.dev stand nicht in der Ausgabe von wrangler."
+            exit 0
+          fi
+          status() { curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$1" || true; }
+          home=""; app=""; data=""
+          for i in $(seq 1 12); do
+            home="$(status "$url/")"
+            if [ -n "$key" ]; then app="$(status "$url/f/$key/")"; data="$(status "$url/f/$key/api/sync?since=0")"; fi
+            if [ "$home" = 200 ] && { [ -z "$key" ] || { [ "$app" = 200 ] && [ "$data" = 200 ]; }; }; then break; fi
+            sleep 10
+          done
+          echo "Startseite: $home, App: ${app:-–}, Daten: ${data:-–}"
+          {
+            echo "## Antom ist veröffentlicht"
+            echo
+            echo "Adresse: $url"
+            echo
+            if [ -n "$key" ]; then
+              echo "Euer Einladungslink: \`$url/f/<Familienschlüssel>/\` – für <Familienschlüssel> den Wert aus dem Secret ANTOM_FAMILY_KEY einsetzen (er steht hier absichtlich nicht)."
+            else
+              echo "Es fehlt noch das Secret ANTOM_FAMILY_KEY – ohne Familienschlüssel ist die App nicht erreichbar."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ "$home" = 200 ] || { echo "::error::Die Startseite antwortet nicht (Status $home)."; exit 1; }
+          if [ -n "$key" ] && { [ "$app" != 200 ] || [ "$data" != 200 ]; }; then
+            echo "::error::Die App antwortet mit dem Familienschlüssel nicht (App $app, Daten $data)."
+            exit 1
+          fi

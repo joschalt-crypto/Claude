@@ -4,14 +4,19 @@ Wochenplan fürs Essen, nach dem Vorbild der Magnettafel am Kühlschrank: Frühs
 Hauptessen für jeden Tag planen, Gerichte umsortieren und zu jedem Gericht die Zutaten, die
 Einkaufsliste und die Zubereitung mit Cosori-Airfryer und Thermomix sehen.
 
-Läuft als Claude-Artifact (Öffnen über Claude, gemeinsamer Plan für alle mit Bearbeitungsrecht):
-https://claude.ai/artifact/JW7gSbmGHVaQ9XFbXKtoDn
+Antom gibt es in drei Formen, alle aus denselben Quellen in `src/`:
 
-Dazu gibt es **`Antom.html`**: dieselbe App als eine einzige Datei für jeden Browser, ohne Claude
-und ohne Internet (Schrift, SortableJS und Fotos stecken in der Datei). Sie speichert den Plan im
-Browser des jeweiligen Geräts; Claude-Funktionen (Scan, Import, Vorschläge, Rezepte schreiben)
-gibt es dort nicht. Am Computer per Doppelklick öffnen; am Handy am besten über einen Webspace
-(z. B. GitHub Pages) im Browser öffnen und zum Home-Bildschirm hinzufügen.
+- **Eigene Web-App** (`server/`) – für die Familie gedacht: ein privater Einladungslink, auf dem iPhone
+  über „Zum Home-Bildschirm“ wie eine App, ohne Anmeldung, gemeinsamer Plan für alle, offline nutzbar,
+  Claude über den eigenen API-Schlüssel. Läuft kostenlos bei Cloudflare und wird bei jeder Änderung
+  über GitHub Actions neu veröffentlicht. Einrichtung Schritt für Schritt:
+  [`server/EINRICHTUNG.md`](server/EINRICHTUNG.md).
+- **Claude-Artifact** (Öffnen über Claude, gemeinsamer Plan für alle mit Bearbeitungsrecht):
+  https://claude.ai/artifact/JW7gSbmGHVaQ9XFbXKtoDn
+- **`Antom.html`**: dieselbe App als eine einzige Datei für jeden Browser, ohne Claude und ohne
+  Internet (Schrift, SortableJS und Fotos stecken in der Datei). Sie speichert den Plan im Browser
+  des jeweiligen Geräts; Claude-Funktionen (Scan, Import, Vorschläge, Rezepte schreiben) gibt es dort
+  nicht. Am Computer per Doppelklick öffnen.
 
 ## Funktionen
 
@@ -54,6 +59,9 @@ gibt es dort nicht. Am Computer per Doppelklick öffnen; am Handy am besten übe
   „Claude erlauben“, der die Berechtigungen öffnet). Ohne Claude oder nach einem Fehler übernimmt
   „Selbst eintragen“ Link und Text ins Rezeptformular.
 - **Erster Start**: kurze Einführung in vier Bildern (einmal pro Gerät, in den Einstellungen wieder abrufbar).
+- **Web-App**: Hinweis „Auf den Home-Bildschirm“ beim ersten Öffnen in Safari, Einladungslink teilen,
+  Sicherung speichern und laden (alles mit Fotos, ersetzt den Plan für die ganze Familie), Stand
+  „Familienplan · offline“ / „Offline – kommt später“ in den Einstellungen.
 - **Design**: Titel in Fraunces (Google Fonts), Text in der Systemschrift, kobaltblauer Kopf auf der
   Woche, Farben pro Kategorie (Frühstück Honig, Hauptgerichte Tomate, Salate Basilikum, Süßes
   Pflaume), große Titel, die beim Scrollen in eine Glasleiste wandern, Tab-Leiste, Hell- und
@@ -64,12 +72,15 @@ gibt es dort nicht. Am Computer per Doppelklick öffnen; am Handy am besten übe
 | Pfad | Inhalt |
 | --- | --- |
 | `src/` | die Seite in Teilen: `01-style.html` (CSS), `02-body.html` (Markup, Icons), `03-head.js` … `11-events.js` (Hilfen, Rezepte, Daten, Darstellung, Sheets, Scan/Import, Ereignisse) |
-| `tools/build.py` | setzt `src/` zu `index.html` und `Antom.html` zusammen und bettet die Fotos ein (`Pillow`) |
+| `src/web/shim.js` | nur in der Web-App: `window.claude` (db, sample) über den eigenen Server, Kopie des Plans auf dem Handy, Warteschlange für Änderungen ohne Netz |
+| `tools/build.py` | setzt `src/` zu `index.html`, `Antom.html` und `server/public/app.html` zusammen, bettet die Fotos ein und erzeugt die App-Symbole (`Pillow`) |
 | `index.html` | die fertige Seite (ca. 2,3 MB), so wie sie als Artifact veröffentlicht wird – nicht von Hand bearbeiten |
 | `Antom.html` | dieselbe Seite als vollständiges Dokument für jeden Browser (ca. 2,6 MB): Fraunces und SortableJS eingebettet, ohne die großen Fotodateien, Plan im `localStorage` |
 | `img/` | Fotos (Higgsfield) in 960×1200: die 25 Gerichte, `ph-*` (gedeckter Tisch für eigene Rezepte), `ob-*` (Einführung), `scan-card`, `icon` |
 | `tools/photos.py` | macht aus den Higgsfield-JPEGs die WebP-Dateien in `img/` |
-| `test/` | Playwright-Tests mit nachgebautem `window.claude` und lokalen Kopien von SortableJS und Fraunces |
+| `server/` | die Web-App: Cloudflare Worker (`src/worker.js`), Familienplan als Durable Object mit SQLite (`src/family.js`), `public/` (App, Startseite, Service Worker, Symbole), `wrangler.toml`, Anleitung `EINRICHTUNG.md` |
+| `../.github/workflows/antom-web.yml` | veröffentlicht die Web-App bei Cloudflare (Push auf `claude/antom-app` oder „Re-run“) |
+| `test/` | Playwright-Tests mit nachgebautem `window.claude` und lokalen Kopien von SortableJS und Fraunces; `web.js` mit echtem Server und Claude-Ersatz (`mock-anthropic.mjs`) |
 
 **Fotos**: Jedes Foto steckt zweimal in `index.html` – 540×675 für Karten und Rezeptkopf, 200×200 für
 Listen –, als Base64-WebP, das beim Start in Blob-URLs umgewandelt wird. Damit sind die Bilder in jeder
@@ -85,7 +96,9 @@ python3 tools/build.py [ordner-mit-higgsfield-jpegs]   # nach jeder Änderung in
 ## Daten
 
 Die Artifact-Datenbank (Capability `db`) hält den gemeinsamen Plan. Ohne Schreibrechte speichert
-die Seite im Browser (`localStorage`, Schlüssel `antom.v4`).
+die Seite im Browser (`localStorage`, Schlüssel `antom.v4`). Die Web-App hält dieselben Dokumente
+in ihrem Durable Object; jedes Handy fragt alle paar Sekunden nach Änderungen, Fotos (`photos/`)
+werden erst beim Ansehen geladen. Eine Sicherung ist `{ app: "antom", version: 1, exported, docs: { <Pfad>: <Dokument> } }`.
 
 - `days/<JJJJ-MM-TT>`: `{ f: [{ u, d, s? }], h: [...] }`, Frühstück und Hauptessen eines Tages;
   `d` ist die Gericht-ID, `s` eine abweichende Personenzahl. Leere Tage werden gelöscht. Die Tage
@@ -112,11 +125,15 @@ Braucht Node mit `playwright` und ein Chromium (Pfad bei Bedarf über `CHROMIUM_
 
 ```sh
 node test/functional.js                      # über 240 Prüfungen: Woche, Ziehen, Einkauf, Kochbuch, Scan, Import, Thermomix, Einzeldatei, Fotos ohne Netz …
+node test/web.js                             # Web-App mit echtem Server: zwei iPhones, offline, Claude, Scan, Sicherungen, Tageslimit (vorher in server/ `npm ci`)
 node test/visual.js [phone|tablet|desktop]   # Screenshots nach test/shots/
 ```
 
 ## Veröffentlichen
 
-Erst `python3 tools/build.py` laufen lassen, dann `index.html` als Artifact veröffentlichen, die
+**Web-App**: `python3 tools/build.py`, Änderungen auf `claude/antom-app` pushen – GitHub Actions
+veröffentlicht sie (Einrichtung: [`server/EINRICHTUNG.md`](server/EINRICHTUNG.md)).
+
+**Artifact**: erst `python3 tools/build.py` laufen lassen, dann `index.html` als Artifact veröffentlichen, die
 Dateien `img/*.webp` mitgeben und die Capabilities `{ "db": {}, "sample": { "images": true } }` angeben.
 Damit die Eltern denselben Plan sehen, das Artifact über „Teilen“ mit Bearbeitungsrecht freigeben.

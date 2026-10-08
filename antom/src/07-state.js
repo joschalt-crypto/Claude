@@ -204,7 +204,7 @@ async function migrateShared() {
 }
 // one note per device in the shared database: do the published photo files load in this view?
 function reportBig(src) {
-  if (BIG.sent || S.mode !== 'shared' || !store.db) return;
+  if (BIG.sent || S.mode !== 'shared' || !store.db || window.antomWeb) return; // only the artifact view needs this note
   BIG.sent = true;
   let dev = prefs.get('dev', '');
   if (!dev) { dev = rid() + rid(); prefs.set('dev', dev); }

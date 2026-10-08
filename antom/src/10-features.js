@@ -63,6 +63,8 @@ function drawScaled(img, maxEdge, square) {
   return c;
 }
 const jpegBlob = (canvas, q) => new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/jpeg', q));
+// photos for Claude: it reads at most about 1568 px on the long edge, larger only costs upload time
+const SHOT_EDGE = 1568;
 // shrink until the data URL fits a database document
 function fitDataUrl(img, maxEdge, maxChars, square) {
   let edge = maxEdge, q = 0.8;
@@ -172,7 +174,7 @@ function openScan(opener, ctx = {}) {
     try {
       const imgs = await Promise.all(st.shots.map((x) => loadImg(x.url)));
       // phone photos are huge: send Claude a sharp but light JPEG of each
-      const images = await Promise.all(st.shots.map(async (x, i) => (imgs[i] ? (await jpegBlob(drawScaled(imgs[i], 2000, false), 0.86)) || x.file : x.file)));
+      const images = await Promise.all(st.shots.map(async (x, i) => (imgs[i] ? (await jpegBlob(drawScaled(imgs[i], SHOT_EDGE, false), 0.85)) || x.file : x.file)));
       if (signal.aborted) throw { code: 'cancelled' };
       const data = await askJSON(scanPrompt(st.shots.length, st.hint.trim(), people), { signal, images });
       const art = data && typeof data.art === 'string' ? data.art.toLowerCase() : 'rezept';
@@ -250,11 +252,11 @@ function readPaste(text) {
 // into a few readable pieces from top to bottom
 function sliceCanvas(img, n) {
   const w = img.naturalWidth, h = img.naturalHeight;
-  if (n <= 1) return [drawScaled(img, 2000, false)];
+  if (n <= 1) return [drawScaled(img, SHOT_EDGE, false)];
   const step = Math.ceil(h / n), overlap = Math.round(w * 0.06);
   return Array.from({ length: n }, (_, i) => {
     const y0 = Math.max(0, i * step - overlap), y1 = Math.min(h, (i + 1) * step + overlap);
-    const k = Math.min(1, 2000 / Math.max(w, y1 - y0));
+    const k = Math.min(1, SHOT_EDGE / Math.max(w, y1 - y0));
     const c = document.createElement('canvas');
     c.width = Math.max(1, Math.round(w * k));
     c.height = Math.max(1, Math.round((y1 - y0) * k));
@@ -516,7 +518,10 @@ function openSettings(opener) {
   openSheet({
     render() {
       const n = S.settings.people;
-      const shareText = S.mode === 'shared'
+      const web = !!window.antomWeb;
+      const shareText = S.mode === 'shared' && web
+        ? 'Alle mit eurem Einladungslink sehen dieselbe Woche, dieselben Rezepte und dieselbe Einkaufsliste. Änderungen kommen nach wenigen Sekunden auf allen Handys an – ohne Internet merkt sich Antom sie und schickt sie später.'
+        : S.mode === 'shared'
         ? 'Alle, die dieses Antom bearbeiten dürfen, sehen dieselbe Woche, dieselben Rezepte und dieselbe Einkaufsliste. Änderungen erscheinen sofort auf allen Geräten.'
         : S.localReason === 'readonly'
           ? 'Ihr dürft den gemeinsamen Plan nur ansehen. Deshalb speichert Antom eure Änderungen auf diesem Gerät. Für einen gemeinsamen Plan braucht ihr Bearbeitungsrechte.'
@@ -531,6 +536,18 @@ function openSettings(opener) {
         <h3 class="sec-h">Speichern &amp; Teilen</h3>
         <div class="group"><div class="row"><span class="row-ic" style="--tile:${S.mode === 'shared' ? '#2f7ff0' : '#8e8e93'}">${icon(S.mode === 'shared' ? 'cloud' : 'phone')}</span><span class="grow">Gespeichert</span><span class="val" data-sync></span></div></div>
         <p class="sec-f">${esc(shareText)}</p>
+        ${web ? `<h3 class="sec-h">Familie</h3>
+        <div class="group" style="--inset:60px">
+          <button type="button" class="row" data-act="invite"><span class="row-ic" style="--tile:#34a853">${icon('share')}</span><span class="grow">Familie einladen</span>${icon('chevron-right', 'chev')}</button>
+          ${isIOS() && !isStandalone() ? `<button type="button" class="row" data-act="install-help"><span class="row-ic" style="--tile:var(--accent)">${icon('phone')}</span><span class="grow">Auf den Home-Bildschirm</span>${icon('chevron-right', 'chev')}</button>` : ''}
+        </div>
+        <p class="sec-f">Wer den Einladungslink hat, sieht und ändert euren Plan – bitte nur in der Familie teilen.</p>
+        <h3 class="sec-h">Sicherung</h3>
+        <div class="group" style="--inset:60px">
+          <button type="button" class="row" data-act="backup-save"><span class="row-ic" style="--tile:#2f7ff0">${icon('download')}</span><span class="grow">Sicherung speichern</span></button>
+          <button type="button" class="row" data-act="backup-load"><span class="row-ic" style="--tile:#8e8e93">${icon('undo')}</span><span class="grow">Sicherung laden …</span></button>
+        </div>
+        <p class="sec-f">Eine Datei mit allem: Wochen, eigene Rezepte, Fotos und Einkaufslisten. „Laden“ ersetzt den Plan für die ganze Familie.</p>` : ''}
         <h3 class="sec-h">Woche</h3>
         <div class="group" style="--inset:60px">
           ${copyBfPlan().length ? `<button type="button" class="row" data-act="copy-bf"><span class="row-ic" style="--tile:#ef9b0f">${icon('repeat')}</span><span class="grow">Frühstück wie letzte Woche</span></button>` : ''}
@@ -549,6 +566,10 @@ function openSettings(opener) {
     refresh() { const sh = $('#sheet'); const top = sh.scrollTop; this.render(); sh.scrollTop = top; },
     act(act, el) {
       if (act === 'onboard') { closeSheet({ instant: true }); showOnboarding(); return true; }
+      if (act === 'invite') { shareInvite(el); return true; }
+      if (act === 'install-help') { const back = UI.opener; closeSheet({ instant: true }); openInstallHelp(back); return true; }
+      if (act === 'backup-save') { saveBackup(); return true; }
+      if (act === 'backup-load') { loadBackup(UI.opener); return true; }
       if (act !== 'people') return false;
       S.settings.people = Math.min(12, Math.max(1, S.settings.people + Number(el.dataset.d)));
       persist(['meta/settings']);
@@ -807,7 +828,7 @@ function hideOnboarding() {
   const box = $('#onboard');
   if (box.hidden) return;
   try { localStorage.setItem(OB_KEY, '1'); } catch (e) { /* storage unavailable */ }
-  const done = () => { box.hidden = true; box.innerHTML = ''; if (!UI.sheet && $('#cook').hidden) document.documentElement.classList.remove('locked'); };
+  const done = () => { box.hidden = true; box.innerHTML = ''; if (!UI.sheet && $('#cook').hidden) document.documentElement.classList.remove('locked'); maybeInstallHint(); };
   if (reduceMotion) { done(); return; }
   box.classList.add('out');
   setTimeout(done, 420);
@@ -815,6 +836,89 @@ function hideOnboarding() {
 function maybeOnboard() {
   let seen = true;
   try { seen = !!localStorage.getItem(OB_KEY); } catch (e) { seen = true; }
-  if (!seen) showOnboarding();
+  if (!seen) showOnboarding(); else maybeInstallHint();
+}
+
+/* ---------- web app: install on the iPhone, invite the family, backups ---------- */
+const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const INSTALL_KEY = 'antom.installHint';
+function maybeInstallHint() {
+  if (!window.antomWeb || !isIOS() || isStandalone()) return;
+  try { if (localStorage.getItem(INSTALL_KEY)) return; localStorage.setItem(INSTALL_KEY, '1'); } catch (e) { return; }
+  setTimeout(() => { if (!UI.sheet && $('#onboard').hidden) openInstallHelp(null); }, 700);
+}
+function openInstallHelp(opener) {
+  openSheet({
+    render() {
+      $('#sheet').innerHTML = `${sheetHead('Auf den Home-Bildschirm')}<div class="pad">
+        <div class="install-hero"><img src="${photoUrl('icon', 'm')}" alt="" width="72" height="72"><p>Dann startet Antom wie eine App: mit eigenem Symbol, im Vollbild und auch ohne Internet.</p></div>
+        <ol class="group rules install">
+          <li><span class="n">1</span><span>In <b>Safari</b> auf <b>Teilen</b> tippen ${icon('share')} – bei neueren iPhones zuerst unten auf <b>•••</b>. Kam der Link über WhatsApp, vorher „In Safari öffnen“ wählen.</span></li>
+          <li><span class="n">2</span><span><b>„Zum Home-Bildschirm“</b> wählen (eventuell etwas nach unten scrollen).</span></li>
+          <li><span class="n">3</span><span>Auf <b>„Hinzufügen“</b> tippen. Ab jetzt Antom über das neue Symbol öffnen.</span></li>
+        </ol>
+        <button class="btn primary wide" type="button" data-act="close">Verstanden</button>
+      </div>`;
+    },
+    act() { return false; },
+  }, opener);
+}
+async function shareInvite(btn) {
+  const url = window.antomWeb.invite();
+  try {
+    if (navigator.share) { await navigator.share({ title: 'Antom', text: 'Unser Essensplan – Link öffnen und in Safari „Zum Home-Bildschirm“ wählen:', url }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(url); toast('Einladungslink kopiert – jetzt z. B. in WhatsApp einfügen'); } catch (e) { copyText(url, btn); }
+}
+async function saveBackup() {
+  try {
+    const data = await window.antomWeb.exportData();
+    const name = `antom-sicherung-${todayKey()}.json`;
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const file = new File([blob], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Antom-Sicherung' }); return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.append(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    toast('Die Sicherung hat gerade nicht geklappt. Bitte mit Internet noch einmal versuchen.');
+  }
+}
+function loadBackup(opener) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json,.json';
+  input.hidden = true;
+  document.body.append(input);
+  input.addEventListener('change', async () => {
+    const f = input.files && input.files[0];
+    input.remove();
+    if (!f) return;
+    let data = null;
+    try { data = JSON.parse(await f.text()); } catch (e) { data = null; }
+    if (!data || data.app !== 'antom' || !data.docs || typeof data.docs !== 'object') { toast('Diese Datei ist keine Antom-Sicherung.'); return; }
+    const own = Object.keys(data.docs).filter((p) => p.startsWith('dishes/')).length;
+    const days = Object.keys(data.docs).filter((p) => p.startsWith('days/')).length;
+    closeSheet({ instant: true });
+    confirmSheet(opener, {
+      title: 'Sicherung laden?',
+      text: `Die Datei enthält ${plural(days, 'geplanten Tag', 'geplante Tage')} und ${plural(own, 'eigenes Rezept', 'eigene Rezepte')}. Sie ersetzt den Plan für alle in der Familie.`,
+      icon: 'undo',
+      actions: [{
+        act: 'restore-backup', label: 'Sicherung laden', cls: 'primary',
+        async run() {
+          closeSheet();
+          toast('Sicherung wird geladen …');
+          try { await window.antomWeb.importData(data); toast('Sicherung geladen'); } catch (e) { toast('Laden hat nicht geklappt. Bitte mit Internet noch einmal versuchen.'); }
+        },
+      }],
+    });
+  }, { once: true });
+  input.click();
 }
 

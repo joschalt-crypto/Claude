@@ -1,4 +1,5 @@
-"""Build index.html (the artifact) and Antom.html (a single file for any browser) from src/.
+"""Build index.html (the artifact), Antom.html (a single file for any browser) and the web
+app's page server/public/app.html from src/.
 
 Usage: python3 tools/build.py [raw_dir]
 
@@ -14,6 +15,10 @@ original Higgsfield JPEGs in raw_dir (<name>.jpg) when given.
 Antom.html is the same page as a complete document that needs nothing else: the
 Fraunces font and SortableJS are inlined, the large photo files are skipped, and
 without window.claude the page keeps its plan in the browser (localStorage).
+
+server/public/app.html is that document for the family's own web app (see server/):
+src/web/shim.js stands in for window.claude and talks to the server, the page links its
+web app manifest and home screen icon, and the large photos come from the server.
 """
 import base64
 import io
@@ -82,8 +87,14 @@ def png64(im):
     return base64.b64encode(buf.getvalue()).decode('ascii')
 
 
-def standalone(page):
-    """The artifact page as a complete document for any browser, without network."""
+def icon_image():
+    raw = RAW and os.path.join(RAW, 'icon.png')
+    src = raw if raw and os.path.exists(raw) else os.path.join(IMG, 'icon.webp')
+    return Image.open(src).convert('RGB')
+
+
+def complete(page, head_extra):
+    """The artifact page as a complete document: own head, Fraunces and SortableJS inlined."""
     title = '<title>Antom</title>\n'
     fonts = re.compile(r'<link rel="(?:preconnect|stylesheet)" href="https://fonts\.(?:googleapis|gstatic)\.com[^"]*"[^>]*>\n')
     sortable_tag = '<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>'
@@ -91,23 +102,56 @@ def standalone(page):
     page = fonts.sub('', page[len(title):])
     with open(os.path.join(VENDOR, 'Sortable.min.js'), encoding='utf-8') as f:
         page = page.replace(sortable_tag, '<script>' + f.read().strip() + '</script>')
-    icon = Image.open(os.path.join(IMG, 'icon.webp')).convert('RGB')
     head = (
         '<!doctype html>\n<html lang="de">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
         '<meta name="theme-color" content="#1f3fd1">\n'
         '<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n'
         '<meta name="apple-mobile-web-app-title" content="Antom">\n'
-        + title +
-        f'<link rel="icon" type="image/png" href="data:image/png;base64,{png64(icon.resize((64, 64), Image.LANCZOS))}">\n'
-        f'<link rel="apple-touch-icon" href="data:image/png;base64,{png64(icon.resize((180, 180), Image.LANCZOS))}">\n'
+        + title + head_extra +
         '<style>[hidden]{display:none!important}'
         '@font-face{font-family:"Fraunces";font-style:normal;font-weight:100 900;font-display:swap;'
         f'src:url(data:font/woff2;base64,{b64file(os.path.join(VENDOR, "fonts", "fraunces-latin-full-normal.woff2"))}) format("woff2")}}</style>\n'
-        '<script>window.ANTOM_STANDALONE = true;</script>\n'
         '</head>\n<body>\n'
     )
     return head + page + '\n</body>\n</html>\n'
+
+
+def standalone(page):
+    """Antom.html: works from disk, without network, plan in localStorage."""
+    icon = icon_image()
+    return complete(page, (
+        f'<link rel="icon" type="image/png" href="data:image/png;base64,{png64(icon.resize((64, 64), Image.LANCZOS))}">\n'
+        f'<link rel="apple-touch-icon" href="data:image/png;base64,{png64(icon.resize((180, 180), Image.LANCZOS))}">\n'
+        '<script>window.ANTOM_STANDALONE = true;</script>\n'
+    ))
+
+
+def web(page):
+    """server/public/app.html: the family's web app, served at /f/<key>/ by the server."""
+    with open(os.path.join(SRC, 'web', 'shim.js'), encoding='utf-8') as f:
+        shim = f.read().strip() + '\n'
+    return complete(page, (
+        '<meta name="referrer" content="no-referrer">\n'
+        '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n'
+        '<link rel="manifest" href="manifest.webmanifest">\n'
+        '<link rel="icon" type="image/png" href="/icons/icon-192.png">\n'
+        '<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">\n'
+        '<script>window.ANTOM_WEB = true;</script>\n' + shim
+    ))
+
+
+def web_icons():
+    out = os.path.join(APP, 'server', 'public', 'icons')
+    os.makedirs(out, exist_ok=True)
+    icon = icon_image()
+    for name, size in (('apple-touch-icon.png', 180), ('icon-192.png', 192), ('icon-512.png', 512)):
+        icon.resize((size, size), Image.LANCZOS).save(os.path.join(out, name), optimize=True)
+    # maskable: the plate inside the safe zone, on the icon's own blue
+    plate = icon.resize((410, 410), Image.LANCZOS)
+    canvas = Image.new('RGB', (512, 512), icon.getpixel((6, 6)))
+    canvas.paste(plate, (51, 51))
+    canvas.save(os.path.join(out, 'icon-maskable-512.png'), optimize=True)
 
 
 def write(name, text):
@@ -127,6 +171,8 @@ def main():
     page = ''.join(html)
     write('index.html', page)
     write('Antom.html', standalone(page))
+    write(os.path.join('server', 'public', 'app.html'), web(page))
+    web_icons()
 
 
 if __name__ == '__main__':
