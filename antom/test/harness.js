@@ -133,4 +133,19 @@ const MOCK = `
   window.claude = { use: async (name) => { await new Promise((r) => setTimeout(r, 30)); return name === 'db' ? db : name === 'user' ? user : name === 'sample' ? sample : null; } };
 })();`;
 
-module.exports = { launch, newPage, open, shot, MOCK, base, SHOTS };
+// Lets the faked sample() accept images and remembers the options of the last call.
+const SAMPLE_IMAGES = `(() => {
+  const orig = window.claude.use;
+  window.claude.use = async (name) => {
+    const r = await orig(name);
+    if (name === 'sample' && r && !r.__patched) {
+      r.__patched = true;
+      r.limits = async () => ({ maxPromptBytes: 262144, images: { maxCount: 3, maxInputBytes: 5e6, mediaTypes: ['image/png', 'image/jpeg', 'image/webp'] } });
+      const j = r.json;
+      r.json = async (input, opts) => { window.__lastOpts = opts; return j(input, opts); };
+    }
+    return r;
+  };
+})();`;
+
+module.exports = { launch, newPage, open, shot, MOCK, SAMPLE_IMAGES, base, SHOTS };

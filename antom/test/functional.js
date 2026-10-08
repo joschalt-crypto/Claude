@@ -1,6 +1,6 @@
 // Functional checks for Antom against a faked window.claude: run `node test/functional.js`.
 const path = require('path');
-const { launch, newPage, open, MOCK, base } = require('./harness');
+const { launch, newPage, open, MOCK, SAMPLE_IMAGES, base } = require('./harness');
 const { seedScript } = require('./seed');
 
 let pass = 0, fail = 0;
@@ -13,20 +13,6 @@ const ids = (list) => (list || []).map((e) => e.d);
 const text = (page, sel) => page.locator(sel).first().innerText();
 const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 const desk = { viewport: { width: 1366, height: 900 } };
-// page-side extras: image limits for sample, remember the options of the last call
-const SAMPLE_PLUS = `(() => {
-  const orig = window.claude.use;
-  window.claude.use = async (name) => {
-    const r = await orig(name);
-    if (name === 'sample' && r && !r.__patched) {
-      r.__patched = true;
-      r.limits = async () => ({ maxPromptBytes: 262144, images: { maxCount: 3, maxInputBytes: 5e6, mediaTypes: ['image/png', 'image/jpeg', 'image/webp'] } });
-      const j = r.json;
-      r.json = async (input, opts) => { window.__lastOpts = opts; return j(input, opts); };
-    }
-    return r;
-  };
-})();`;
 const RECIPE = {
   t: 'Kürbissuppe', name: 'Kürbissuppe mit Croutons', cat: 'haupt', time: 40, veg: true,
   ingredients: [
@@ -98,7 +84,7 @@ async function touchDrag(page, fromSel, toSel) {
 
   console.log('A. shared plan on a phone');
   {
-    const { page, errors, ctx } = await newPage(browser, Object.assign({ colorScheme: 'light' }, phone), seedScript() + MOCK + SAMPLE_PLUS);
+    const { page, errors, ctx } = await newPage(browser, Object.assign({ colorScheme: 'light' }, phone), seedScript() + MOCK + SAMPLE_IMAGES);
     await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base() });
     await open(page);
     await wait(page, 600);
@@ -445,6 +431,7 @@ async function touchDrag(page, fromSel, toSel) {
     await open(page);
     await wait(page, 600);
     ok((await text(page, '#weekFoot [data-act="suggest"]')).includes('2 freie Tage'), 'offers to fill the two free days');
+    ok(await page.locator('#scanFab').isHidden(), 'no camera button without image access to Claude');
     await page.evaluate(() => { window.__sampleReply = { vorschlaege: [{ tag: 'do', id: 'risotto', grund: 'cremig und schnell' }, { tag: 'so', id: 'pizza', grund: 'Sonntagsklassiker' }, { tag: 'mo', id: 'bolo' }, { tag: 'so', id: 'fisch' }, { tag: 'do', id: 'gibtsnicht' }] }; });
     await page.click('#weekFoot [data-act="suggest"]');
     await page.waitForSelector('#sheet .sug', { timeout: 4000 }).catch(() => {});
@@ -553,6 +540,113 @@ async function touchDrag(page, fromSel, toSel) {
     ok(!d['plan/mo'].h.length && ids(d['plan/di'].f).includes('bolo'), 'long-press drag on a phone moves a meal', [d['plan/mo'], d['plan/di']]);
     ok(await page.locator('#sheet').isHidden(), 'drag does not open the recipe');
     ok(!errors.length, 'no page errors (D2)', errors);
+    await ctx.close();
+  }
+
+  console.log('E. camera scan');
+  {
+    const { page, errors, ctx } = await newPage(browser, phone, seedScript() + MOCK + SAMPLE_IMAGES);
+    await open(page);
+    await wait(page, 600);
+    ok(await page.locator('#scanFab').isVisible(), 'camera button next to the tab bar');
+    const tabRight = await page.locator('.tabbar').evaluate((el) => el.getBoundingClientRect().right);
+    const fabLeft = await page.locator('#scanFab').evaluate((el) => el.getBoundingClientRect().left);
+    ok(tabRight <= fabLeft, 'tab bar makes room for it', [tabRight, fabLeft]);
+
+    // a finished dish: recipe plus photo plate, saved straight away
+    await page.evaluate((r) => { window.__sampleReply = Object.assign({}, r, { art: 'gericht', t: 'Kürbissuppe' }); }, RECIPE);
+    await page.click('#scanFab');
+    await wait(page, 300);
+    ok(await page.locator('#sheet.scan .shutter-wrap').count() === 1 && await page.locator('#sheet .scan-empty').count() === 1, 'scanner opens with shutter and hints');
+    await page.setInputFiles('#scanCam', path.join(__dirname, '..', 'img', 'tikka.webp'));
+    await wait(page, 300);
+    ok(await page.locator('#sheet .scan-photo').count() === 1 && await page.locator('#sheet .scan-thumb').count() === 1, 'photo shows in the scanner');
+    await page.setInputFiles('#sheet .scan-add input', path.join(__dirname, '..', 'img', 'caponata.webp'));
+    await wait(page, 300);
+    ok(await page.locator('#sheet .scan-thumb').count() === 2 && (await text(page, '#sheet .scan-count')) === '2 / 3', 'a second page can be added');
+    await page.click('#sheet [data-act="scan-go"]');
+    await page.waitForSelector('#sheet .r-title', { timeout: 6000 }).catch(() => {});
+    let d = await docs(page);
+    const made = Object.entries(d).find(([k, v]) => k.startsWith('dishes/') && v.t === 'Kürbissuppe');
+    ok(made && made[1].origin === 'scan' && made[1].photo && made[1].photo.kind === 'gericht' && made[1].photo.n === 2 && /^data:image\/jpeg;base64,/.test(made[1].thumb || ''), 'scan saves the recipe with its photo as plate', made && Object.keys(made[1]));
+    const sid = made ? made[0].split('/')[1] : '';
+    const ph = d['photos/' + sid];
+    ok(ph && ph.pages.length === 2 && JSON.stringify(ph).length < 256 * 1024, 'original photos stored under the 256 KiB document limit', ph && JSON.stringify(ph).length);
+    ok(made && made[1].ing.find((i) => i.n === 'Kokosmilch').s === 'konserve' && made[1].steps[1].af.c === 180, 'ingredients and Cosori step come from Claude');
+    const sent = await page.evaluate(() => window.__lastOpts.images.map((b) => b.type));
+    ok(sent.length === 2 && sent.every((t) => t === 'image/jpeg'), 'both photos go to Claude as JPEG', sent);
+    ok((await page.evaluate(() => window.__lastPrompt)).includes('2 Fotos'), 'prompt knows there are two pages');
+    ok((await text(page, '#sheetTitle')) === 'Kürbissuppe' && await page.locator('#sheet .fresh').count() === 1, 'the new recipe opens with a check-it hint');
+    ok((await text(page, '#toast')).includes('Kürbissuppe ist jetzt im Kochbuch'), 'toast confirms');
+    ok(await page.locator('#sheet .r-plate img.plate.photo').count() === 1, 'recipe hero shows the dish photo');
+    await page.click('#sheet [data-act="rtab"][data-tab="recipe"]');
+    await page.waitForSelector('#sheet .orig-btn img', { timeout: 3000 }).catch(() => {});
+    ok(await page.locator('#sheet .orig-btn img').count() === 2, 'recipe tab shows the original photos');
+    await page.locator('#sheet .orig-btn').first().click();
+    await wait(page);
+    ok(await page.locator('#viewer img').isVisible(), 'a photo opens large');
+    await page.keyboard.press('Escape');
+    await wait(page);
+    ok(await page.locator('#viewer').isHidden() && await page.locator('#sheet').isVisible(), 'Escape closes just the photo');
+    await page.keyboard.press('Escape');
+    await wait(page, 400);
+    await page.click('.tabbar [data-tab="book"]');
+    await wait(page, 300);
+    const cardSel = `#book .card[data-dish="${sid}"]`;
+    ok(await page.locator(`${cardSel} img.plate.photo`).count() === 1 && (await text(page, `${cardSel} .tag`)) === 'Foto', 'card shows the photo plate and a "Foto" tag');
+    await page.click(cardSel);
+    await wait(page, 600);
+    await page.click('#sheet [data-act="r-edit"]');
+    await wait(page, 300);
+    await page.fill('#f-time', '45');
+    await page.click('#dishForm button[type="submit"]');
+    await wait(page, 400);
+    d = await docs(page);
+    ok(d['dishes/' + sid].time === 45 && d['dishes/' + sid].origin === 'scan' && !!d['dishes/' + sid].thumb && !!d['dishes/' + sid].photo, 'editing keeps photo and origin');
+
+    // scanning from a day plans the recipe there
+    await page.click('.tabbar [data-tab="week"]');
+    await page.click('#days .slot[data-day="do"][data-slot="h"] .meal-empty');
+    await wait(page, 300);
+    await page.click('#sheet [data-act="scan"]');
+    await wait(page, 300);
+    ok((await text(page, '#sheet .scan-for')).includes('Donnerstag, Hauptessen'), 'scanner knows the day');
+    await page.evaluate((r) => { window.__sampleReply = Object.assign({}, r, { art: 'rezept', t: 'Omas Gulasch', name: 'Omas Rindergulasch' }); }, RECIPE);
+    await page.setInputFiles('#scanCam', path.join(__dirname, '..', 'img', 'linsen.webp'));
+    await wait(page, 200);
+    await page.fill('#scanHint', 'nur das Rezept links');
+    await page.click('#sheet [data-act="scan-go"]');
+    await page.waitForSelector('#sheet .r-title', { timeout: 6000 }).catch(() => {});
+    d = await docs(page);
+    const g = Object.entries(d).find(([k, v]) => k.startsWith('dishes/') && v.t === 'Omas Gulasch');
+    const gid = g ? g[0].split('/')[1] : '';
+    ok(g && !g[1].thumb && g[1].photo.kind === 'rezept' && ids(d['plan/do'].h).includes(gid), 'written recipe: no photo plate, planned on Thursday', d['plan/do']);
+    ok((await text(page, '#sheet .r-eyebrow')).toLowerCase() === 'donnerstag · hauptessen', 'recipe opens in its day');
+    ok((await page.evaluate(() => window.__lastPrompt)).includes('nur das Rezept links'), 'hint reaches Claude');
+    await page.click('#toast [data-act="undo"]');
+    await wait(page, 400);
+    d = await docs(page);
+    ok(!d['dishes/' + gid] && !ids(d['plan/do'].h).includes(gid) && await page.locator('#sheet').isHidden(), 'undo removes recipe and plan entry');
+    await wait(page, 9500);
+    d = await docs(page);
+    ok(!d['photos/' + gid] && !!d['photos/' + sid], 'its photo is cleaned up afterwards, others stay');
+
+    // nothing to read on the photo
+    await page.evaluate(() => { window.__sampleReply = { art: 'nichts', grund: 'nur eine leere Wand' }; });
+    await page.click('#scanFab');
+    await wait(page, 300);
+    await page.setInputFiles('#scanCam', path.join(__dirname, '..', 'img', 'teller.webp'));
+    await wait(page, 200);
+    const count = Object.keys(await docs(page)).length;
+    await page.click('#sheet [data-act="scan-go"]');
+    await page.waitForFunction(() => /kein Rezept/.test((document.querySelector('#sheet .scan-status') || {}).textContent || ''), null, { timeout: 4000 }).catch(() => {});
+    ok((await text(page, '#sheet .scan-status')).includes('nur eine leere Wand') && Object.keys(await docs(page)).length === count, 'no recipe found: explains and saves nothing');
+    ok(await page.locator('#sheet .scan-go').count() === 1, 'can try again right away');
+    await page.click('#sheet [data-act="scan-del"]');
+    await wait(page);
+    ok(await page.locator('#sheet .scan-empty').count() === 1, 'removing the photo goes back to the camera');
+    await page.keyboard.press('Escape');
+    ok(!errors.length, 'no page errors (E)', errors);
     await ctx.close();
   }
 
