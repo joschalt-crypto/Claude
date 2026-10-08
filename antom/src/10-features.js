@@ -520,7 +520,9 @@ function openSettings(opener) {
         ? 'Alle, die dieses Antom bearbeiten dürfen, sehen dieselbe Woche, dieselben Rezepte und dieselbe Einkaufsliste. Änderungen erscheinen sofort auf allen Geräten.'
         : S.localReason === 'readonly'
           ? 'Ihr dürft den gemeinsamen Plan nur ansehen. Deshalb speichert Antom eure Änderungen auf diesem Gerät. Für einen gemeinsamen Plan braucht ihr Bearbeitungsrechte.'
-          : 'Antom speichert den Plan auf diesem Gerät. Geteilt wird er, wenn ihr Antom angemeldet bei Claude öffnet und Bearbeitungsrechte dafür habt.';
+          : window.ANTOM_STANDALONE
+            ? 'Diese Antom-Datei speichert den Plan in diesem Browser auf diesem Gerät. Jedes Gerät hat seinen eigenen Plan – gemeinsam geht es über Antom in Claude.'
+            : 'Antom speichert den Plan auf diesem Gerät. Geteilt wird er, wenn ihr Antom angemeldet bei Claude öffnet und Bearbeitungsrechte dafür habt.';
       $('#sheet').innerHTML = `${sheetHead('Einstellungen')}<div class="pad" style="gap:0">
         <div class="about"><img class="appicon" src="${photoUrl('icon', 'm')}" alt="" width="76" height="76"><h2>Antom</h2><p>Euer Wochenplan fürs Essen</p></div>
         <h3 class="sec-h">Haushalt</h3>

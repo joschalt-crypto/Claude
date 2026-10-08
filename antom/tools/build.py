@@ -1,4 +1,4 @@
-"""Build index.html from src/ and embed the photos.
+"""Build index.html (the artifact) and Antom.html (a single file for any browser) from src/.
 
 Usage: python3 tools/build.py [raw_dir]
 
@@ -10,11 +10,16 @@ them sharper where that works.
 
 The embedded sizes are made from the photos in img/ - or, sharper, from the
 original Higgsfield JPEGs in raw_dir (<name>.jpg) when given.
+
+Antom.html is the same page as a complete document that needs nothing else: the
+Fraunces font and SortableJS are inlined, the large photo files are skipped, and
+without window.claude the page keeps its plan in the browser (localStorage).
 """
 import base64
 import io
 import json
 import os
+import re
 import sys
 
 from PIL import Image, ImageFilter
@@ -22,6 +27,7 @@ from PIL import Image, ImageFilter
 APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(APP, 'src')
 IMG = os.path.join(APP, 'img')
+VENDOR = os.path.join(APP, 'test', 'vendor')
 RAW = sys.argv[1] if len(sys.argv) > 1 else None
 
 PARTS = ['01-style.html', '02-body.html', '03-head.js', '@photos', '05-recipes.js', '06-model.js',
@@ -65,6 +71,51 @@ def photos_js():
             f'const PHOTOS = {body};\n')
 
 
+def b64file(path):
+    with open(path, 'rb') as f:
+        return base64.b64encode(f.read()).decode('ascii')
+
+
+def png64(im):
+    buf = io.BytesIO()
+    im.save(buf, 'PNG', optimize=True)
+    return base64.b64encode(buf.getvalue()).decode('ascii')
+
+
+def standalone(page):
+    """The artifact page as a complete document for any browser, without network."""
+    title = '<title>Antom</title>\n'
+    fonts = re.compile(r'<link rel="(?:preconnect|stylesheet)" href="https://fonts\.(?:googleapis|gstatic)\.com[^"]*"[^>]*>\n')
+    sortable_tag = '<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>'
+    assert page.startswith(title) and len(fonts.findall(page)) == 3 and page.count(sortable_tag) == 1
+    page = fonts.sub('', page[len(title):])
+    with open(os.path.join(VENDOR, 'Sortable.min.js'), encoding='utf-8') as f:
+        page = page.replace(sortable_tag, '<script>' + f.read().strip() + '</script>')
+    icon = Image.open(os.path.join(IMG, 'icon.webp')).convert('RGB')
+    head = (
+        '<!doctype html>\n<html lang="de">\n<head>\n<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+        '<meta name="theme-color" content="#1f3fd1">\n'
+        '<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n'
+        '<meta name="apple-mobile-web-app-title" content="Antom">\n'
+        + title +
+        f'<link rel="icon" type="image/png" href="data:image/png;base64,{png64(icon.resize((64, 64), Image.LANCZOS))}">\n'
+        f'<link rel="apple-touch-icon" href="data:image/png;base64,{png64(icon.resize((180, 180), Image.LANCZOS))}">\n'
+        '<style>[hidden]{display:none!important}'
+        '@font-face{font-family:"Fraunces";font-style:normal;font-weight:100 900;font-display:swap;'
+        f'src:url(data:font/woff2;base64,{b64file(os.path.join(VENDOR, "fonts", "fraunces-latin-full-normal.woff2"))}) format("woff2")}}</style>\n'
+        '<script>window.ANTOM_STANDALONE = true;</script>\n'
+        '</head>\n<body>\n'
+    )
+    return head + page + '\n</body>\n</html>\n'
+
+
+def write(name, text):
+    with open(os.path.join(APP, name), 'w', encoding='utf-8') as f:
+        f.write(text)
+    print(f'{name}: {len(text.encode("utf-8")) / 1024:.0f} KiB')
+
+
 def main():
     html = []
     for part in PARTS:
@@ -74,9 +125,8 @@ def main():
             with open(os.path.join(SRC, part), encoding='utf-8') as f:
                 html.append(f.read())
     page = ''.join(html)
-    with open(os.path.join(APP, 'index.html'), 'w', encoding='utf-8') as f:
-        f.write(page)
-    print(f'index.html: {len(page.encode("utf-8")) / 1024:.0f} KiB')
+    write('index.html', page)
+    write('Antom.html', standalone(page))
 
 
 if __name__ == '__main__':

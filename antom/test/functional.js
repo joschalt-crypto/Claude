@@ -1002,6 +1002,35 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await ctx.close();
   }
 
+  console.log('I. Antom.html, the single file');
+  {
+    const { page, errors, ctx } = await newPage(browser, phone);
+    const net = [];
+    page.on('request', (r) => { if (/^https?:/i.test(r.url())) net.push(r.url()); });
+    const reopen = async (go) => { await go(); await page.waitForFunction(() => document.fonts && document.fonts.status === 'loaded'); await wait(page, 600); };
+    await reopen(() => page.goto('file://' + path.join(__dirname, '..', 'Antom.html')));
+    ok(await page.title() === 'Antom' && await page.evaluate(() => document.characterSet) === 'UTF-8' && await page.evaluate(() => document.compatMode) === 'CSS1Compat', 'a complete document: title, UTF-8, standards mode');
+    ok(await page.evaluate(() => document.fonts.check('700 30px Fraunces') && typeof window.Sortable === 'function'), 'font and drag & drop are built in');
+    ok(await page.locator('#days .meal').count() >= 7 && (await page.textContent('#days')).includes('Frühstück'), 'starts with the fridge plan, umlauts intact');
+    ok(await page.evaluate(() => { const v = [...document.querySelectorAll('img')].filter((i) => { const r = i.getBoundingClientRect(); return r.width && r.top < innerHeight && r.bottom > 0; }); return v.length > 3 && v.every((i) => i.naturalWidth > 0); }), 'photos show');
+    ok(await page.locator('#v-plan .nav [data-act="scan"]').isHidden(), 'no Claude features without Claude');
+    const key = (await page.locator('#days .day').first().getAttribute('id')).slice(4);
+    await page.click(`#day-${key} [data-act="pick"]`);
+    await wait(page, 600);
+    await page.click('#sheet .pick-row[data-id="tikka"]');
+    await wait(page, 500);
+    ok(await page.locator(`${slotSel(key, 'h')} .meal[data-dish="tikka"]`).count() === 1, 'plan a dish');
+    await reopen(() => page.reload());
+    ok(await page.locator(`${slotSel(key, 'h')} .meal[data-dish="tikka"]`).count() === 1, 'still planned after reopening the file (kept in the browser)');
+    await page.locator('#v-plan .nav [data-act="settings"]').click();
+    await wait(page, 600);
+    ok((await page.locator('#sheet .sec-f').allInnerTexts()).some((t) => t.startsWith('Diese Antom-Datei')), 'settings say where the plan is kept');
+    await closeSheet(page);
+    ok(!net.length, 'loads nothing from the network', net);
+    ok(!errors.length, 'no page errors (I)', errors);
+    await ctx.close();
+  }
+
   console.log('F. first start and layout');
   {
     const { page, errors, ctx } = await newPage(browser, Object.assign({ onboarding: true }, phone), seedScript() + MOCK + SAMPLE_IMAGES);

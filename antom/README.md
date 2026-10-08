@@ -4,8 +4,14 @@ Wochenplan fürs Essen, nach dem Vorbild der Magnettafel am Kühlschrank: Frühs
 Hauptessen für jeden Tag planen, Gerichte umsortieren und zu jedem Gericht die Zutaten, die
 Einkaufsliste und die Zubereitung mit Cosori-Airfryer und Thermomix sehen.
 
-Läuft als Claude-Artifact (privat, Öffnen über Claude):
+Läuft als Claude-Artifact (Öffnen über Claude, gemeinsamer Plan für alle mit Bearbeitungsrecht):
 https://claude.ai/artifact/JW7gSbmGHVaQ9XFbXKtoDn
+
+Dazu gibt es **`Antom.html`**: dieselbe App als eine einzige Datei für jeden Browser, ohne Claude
+und ohne Internet (Schrift, SortableJS und Fotos stecken in der Datei). Sie speichert den Plan im
+Browser des jeweiligen Geräts; Claude-Funktionen (Scan, Import, Vorschläge, Rezepte schreiben)
+gibt es dort nicht. Am Computer per Doppelklick öffnen; am Handy am besten über einen Webspace
+(z. B. GitHub Pages) im Browser öffnen und zum Home-Bildschirm hinzufügen.
 
 ## Funktionen
 
@@ -58,8 +64,9 @@ https://claude.ai/artifact/JW7gSbmGHVaQ9XFbXKtoDn
 | Pfad | Inhalt |
 | --- | --- |
 | `src/` | die Seite in Teilen: `01-style.html` (CSS), `02-body.html` (Markup, Icons), `03-head.js` … `11-events.js` (Hilfen, Rezepte, Daten, Darstellung, Sheets, Scan/Import, Ereignisse) |
-| `tools/build.py` | setzt `src/` zu `index.html` zusammen und bettet die Fotos ein (`Pillow`) |
+| `tools/build.py` | setzt `src/` zu `index.html` und `Antom.html` zusammen und bettet die Fotos ein (`Pillow`) |
 | `index.html` | die fertige Seite (ca. 2,3 MB), so wie sie als Artifact veröffentlicht wird – nicht von Hand bearbeiten |
+| `Antom.html` | dieselbe Seite als vollständiges Dokument für jeden Browser (ca. 2,6 MB): Fraunces und SortableJS eingebettet, ohne die großen Fotodateien, Plan im `localStorage` |
 | `img/` | Fotos (Higgsfield) in 960×1200: die 25 Gerichte, `ph-*` (gedeckter Tisch für eigene Rezepte), `ob-*` (Einführung), `scan-card`, `icon` |
 | `tools/photos.py` | macht aus den Higgsfield-JPEGs die WebP-Dateien in `img/` |
 | `test/` | Playwright-Tests mit nachgebautem `window.claude` und lokalen Kopien von SortableJS und Fraunces |
@@ -104,7 +111,7 @@ die alten Dokumente auf (im Browser genauso von `antom.v1` nach `antom.v4`).
 Braucht Node mit `playwright` und ein Chromium (Pfad bei Bedarf über `CHROMIUM_PATH`).
 
 ```sh
-node test/functional.js                      # über 230 Prüfungen: Woche, Ziehen, Einkauf, Kochbuch, Scan, Import, Thermomix, Fotos ohne Netz …
+node test/functional.js                      # über 240 Prüfungen: Woche, Ziehen, Einkauf, Kochbuch, Scan, Import, Thermomix, Einzeldatei, Fotos ohne Netz …
 node test/visual.js [phone|tablet|desktop]   # Screenshots nach test/shots/
 ```
 

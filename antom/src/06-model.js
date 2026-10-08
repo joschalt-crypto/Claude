@@ -78,6 +78,8 @@ const tmClock = (sec) => `${Math.floor(sec / 60)}:${pad2(Math.round(sec) % 60)}`
    The medium and small sizes are embedded (PHOTOS) and shown as blob URLs, so they never
    depend on the network; the large heroes come from the published files on top (data-big). */
 const IMG_DIMS = { l: 'width="540" height="675"', m: 'width="540" height="675"', s: 'width="200" height="200"' };
+// Antom.html (the single file) has no published photo files next to it
+const BIG_FILES = !window.ANTOM_STANDALONE;
 const blobUrls = new Map();
 function photoUrl(name, size) {
   const key = name + ':' + size;
@@ -104,11 +106,11 @@ function photoHTML(d, size, eager) {
   const own = d && okImg(d.thumb);
   const name = photoName(d);
   const mono = d && !d.img && !own ? `<span class="mono" aria-hidden="true">${esc((d.t || '?').trim().charAt(0).toUpperCase())}</span>` : '';
-  const big = size === 'l' && !own ? ` data-big="img/${name}.webp"` : '';
+  const big = size === 'l' && !own && BIG_FILES ? ` data-big="img/${name}.webp"` : '';
   return `<img src="${photoSrc(d, size)}" alt="" ${IMG_DIMS[size]}${eager ? '' : ' loading="lazy"'} decoding="async" draggable="false" data-name="${own ? 'foto' : name}"${big}>${mono}`;
 }
 const thumbHTML = (d, cls = '') => `<span class="thumb ${cls}">${photoHTML(d, 's')}</span>`;
-const imgOf = (name, size, extra = '') => `<img src="${photoUrl(name, size === 's' ? 's' : 'm')}" alt="" ${IMG_DIMS[size]} decoding="async" draggable="false" data-name="${name}"${size === 'l' ? ` data-big="img/${name}.webp"` : ''}${extra}>`;
+const imgOf = (name, size, extra = '') => `<img src="${photoUrl(name, size === 's' ? 's' : 'm')}" alt="" ${IMG_DIMS[size]} decoding="async" draggable="false" data-name="${name}"${size === 'l' && BIG_FILES ? ` data-big="img/${name}.webp"` : ''}${extra}>`;
 
 // sharper heroes: swap in the large published file once it has loaded; if files do not load
 // in this view, stay with the embedded pictures (and note it once, see reportBig)
