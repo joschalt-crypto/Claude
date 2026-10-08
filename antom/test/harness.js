@@ -1,7 +1,7 @@
 // Playwright helpers for testing Antom locally. Serves the page the way the
 // artifact viewer does (document skeleton + small reset), fakes window.claude,
-// and answers the CDN and Google Fonts requests from test/vendor so the tests
-// run without network access.
+// and answers the SortableJS request from test/vendor so the tests run without
+// network access.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const http = require('http');
@@ -51,22 +51,29 @@ async function launch() {
   return chromium.launch(executablePath ? { executablePath } : {});
 }
 
+// Linux has no San Francisco or New York: stand in with Inter and Charter so the
+// screenshots look like the phones the page is made for.
+const FONTS = `document.addEventListener('DOMContentLoaded', () => {
+  const s = document.createElement('style');
+  s.textContent = ':root:root{--font-ui:"Inter",sans-serif;--font-display:"Inter Display","Inter",sans-serif;--font-serif:"Bitstream Charter",Charter,Georgia,serif;--font-round:"Inter",sans-serif}';
+  document.head.appendChild(s);
+});`;
+// the welcome tour shows once per device; skip it unless a test asks for it
+const SEEN = `try { localStorage.setItem('antom.onboarded', '1'); } catch (e) {}`;
+
 async function newPage(browser, opts = {}, init) {
   await startServer();
-  const ctx = await browser.newContext(Object.assign({ deviceScaleFactor: 2 }, opts));
+  const { onboarding, ...ctxOpts } = opts;
+  const ctx = await browser.newContext(Object.assign({ deviceScaleFactor: 2 }, ctxOpts));
+  await ctx.addInitScript(FONTS);
+  if (!onboarding) await ctx.addInitScript(SEEN);
   await ctx.route('https://cdn.jsdelivr.net/**', (r) => r.fulfill({ path: path.join(VENDOR, 'Sortable.min.js'), contentType: 'application/javascript' }));
-  await ctx.route('https://fonts.googleapis.com/**', (r) => {
-    const u = new URL(r.request().url());
-    if (u.pathname.startsWith('/fonts/')) return r.fulfill({ path: path.join(VENDOR, u.pathname), contentType: 'font/woff2' });
-    return r.fulfill({ path: path.join(VENDOR, 'fonts.css'), contentType: 'text/css' });
-  });
-  await ctx.route('https://fonts.gstatic.com/**', (r) => r.abort());
   if (init) await ctx.addInitScript(init);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-  page.on('requestfailed', (r) => { if (!/gstatic/.test(r.url())) errors.push('requestfailed: ' + r.url()); });
+  page.on('requestfailed', (r) => errors.push('requestfailed: ' + r.url()));
   return { ctx, page, errors };
 }
 
@@ -74,6 +81,11 @@ async function open(page) {
   await page.goto(base() + '/page.html');
   await page.waitForFunction(() => document.fonts && document.fonts.status === 'loaded');
   await page.waitForTimeout(300);
+}
+// wait until every image in view has loaded, for screenshots
+async function settle(page) {
+  await page.waitForFunction(() => [...document.images].filter((i) => i.getBoundingClientRect().top < innerHeight && i.loading !== 'lazy').every((i) => i.complete), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(250);
 }
 
 async function shot(page, name, opts = {}) {
@@ -115,6 +127,7 @@ const MOCK = `
       return {
         path: col,
         onSnapshot(cb) { const l = { col, cb }; listeners.add(l); setTimeout(() => cb(snapFor(col)), 20); return () => listeners.delete(l); },
+        async get() { return snapFor(col); },
         doc(id) { return db.doc(col + '/' + id); },
       };
     },
@@ -148,4 +161,4 @@ const SAMPLE_IMAGES = `(() => {
   };
 })();`;
 
-module.exports = { launch, newPage, open, shot, MOCK, SAMPLE_IMAGES, base, SHOTS };
+module.exports = { launch, newPage, open, settle, shot, MOCK, SAMPLE_IMAGES, base, SHOTS };
