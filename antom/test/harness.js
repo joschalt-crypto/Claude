@@ -1,7 +1,7 @@
 // Playwright helpers for testing Antom locally. Serves the page the way the
 // artifact viewer does (document skeleton + small reset), fakes window.claude,
-// and answers the SortableJS request from test/vendor so the tests run without
-// network access.
+// and answers the SortableJS and Google Fonts requests from test/vendor so the
+// tests run without network access.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const http = require('http');
@@ -51,11 +51,11 @@ async function launch() {
   return chromium.launch(executablePath ? { executablePath } : {});
 }
 
-// Linux has no San Francisco or New York: stand in with Inter and Charter so the
-// screenshots look like the phones the page is made for.
+// Linux has no San Francisco: stand in with Inter so the screenshots look like the
+// phones the page is made for (Fraunces comes from test/vendor like Google Fonts would).
 const FONTS = `document.addEventListener('DOMContentLoaded', () => {
   const s = document.createElement('style');
-  s.textContent = ':root:root{--font-ui:"Inter",sans-serif;--font-display:"Inter Display","Inter",sans-serif;--font-serif:"Bitstream Charter",Charter,Georgia,serif;--font-round:"Inter",sans-serif}';
+  s.textContent = ':root:root{--font-ui:"Inter",sans-serif;--font-round:"Inter",sans-serif}';
   document.head.appendChild(s);
 });`;
 // the welcome tour shows once per device; skip it unless a test asks for it
@@ -68,6 +68,8 @@ async function newPage(browser, opts = {}, init) {
   await ctx.addInitScript(FONTS);
   if (!onboarding) await ctx.addInitScript(SEEN);
   await ctx.route('https://cdn.jsdelivr.net/**', (r) => r.fulfill({ path: path.join(VENDOR, 'Sortable.min.js'), contentType: 'application/javascript' }));
+  await ctx.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ path: path.join(VENDOR, 'fonts.css'), contentType: 'text/css' }));
+  await ctx.route('https://fonts.gstatic.com/**', (r) => r.fulfill({ path: path.join(VENDOR, 'fonts', 'fraunces-latin-full-normal.woff2'), contentType: 'font/woff2', headers: { 'access-control-allow-origin': '*' } }));
   if (init) await ctx.addInitScript(init);
   const page = await ctx.newPage();
   const errors = [];

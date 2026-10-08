@@ -102,7 +102,10 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     ok((await text(page, '#today .hero-title')) === expectHero, 'today card shows today\'s dish', [TODAY, await text(page, '#today .hero-title')]);
     if (!MAIN[TODAY]) ok(await page.locator(`#today [data-act="pick"][data-date="${DAY[TODAY]}"]`).count() === 1, 'no main dish yet: offers to plan one');
     ok(await page.locator('#strip .dp.is-today').count() === 1 && (await attr(page, '#strip .dp.is-today', 'data-date')) === DAY[TODAY], 'day strip marks today');
-    ok((await text(page, '#tPlan')) === 'Diese Woche', 'title names the week');
+    ok((await text(page, '#weekbar .wk span')).startsWith('Diese Woche'), 'week bar names the week');
+    ok(['Guten Morgen', 'Mahlzeit', 'Guten Tag', 'Guten Abend', 'Gute Nacht'].includes(await text(page, '#tPlan')), 'greets by the time of day', await text(page, '#tPlan'));
+    ok(await page.locator('#strip .dp-ph img').count() === 7 && await page.locator('#strip .dp-ph.is-empty').count() === 0, 'week strip shows a photo for every planned day');
+    ok(await page.evaluate(() => [...document.querySelectorAll('#strip img, #days img')].every((i) => i.complete && i.naturalWidth > 0)), 'all photos in the week are loaded');
 
     await scrollTo(page, `${slotSel(DAY.di, 'h')} .meal`);
     await page.click(`${slotSel(DAY.di, 'h')} .meal[data-dish="caponata"]`);
@@ -110,7 +113,7 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     ok(await page.locator('#sheet').isVisible(), 'tapping a meal opens the recipe');
     ok((await text(page, '#sheetTitle')) === 'Caponata', 'recipe title');
     ok((await text(page, '#sheet .r-eyebrow')).toLowerCase() === 'dienstag · hauptessen', 'eyebrow names day and meal');
-    ok(await page.locator('#sheet .r-hero img[src="img/caponata.webp"]').count() === 1, 'big photo on top of the recipe');
+    ok(await page.locator('#sheet .r-hero img[data-name="caponata"]').count() === 1, 'big photo on top of the recipe');
     await page.click('#sheet [data-act="rtab"][data-tab="ing"]');
     await wait(page);
     const qty = async (name) => page.evaluate((n) => { const li = [...document.querySelectorAll('#sheet .ing li')].find((x) => x.children[1].textContent.startsWith(n)); return li ? li.querySelector('.q').textContent : null; }, name);
@@ -258,6 +261,13 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await page.click('.tabbar [data-tab="book"]');
     await wait(page, 400);
     ok(await page.locator('#book .grid .card').count() === 25, '25 recipes in the cookbook');
+    ok(await page.locator('#book .feature').count() === 1 && (await text(page, '#book .feature .tag')).includes('Rezept der Woche'), 'a recipe of the week on top');
+    await page.click('#cats [data-f="fruehstueck"]');
+    await wait(page);
+    ok(await page.locator('#book .grid .card').count() === 3 && (await attr(page, '#cats .cat-tile[aria-pressed="true"]', 'data-f')) === 'alle', 'category tile filters (and tapping again shows all)', await page.locator('#book .grid .card').count());
+    await page.click('#cats .cat-tile[aria-pressed="true"]');
+    await wait(page);
+    ok(await page.locator('#book .grid .card').count() === 25, 'back to all recipes');
     ok(await page.locator('#book .hscroll .card[data-dish="pizza"] .fav-badge').count() === 1, 'favourites shelf with hearts');
     ok(await page.locator('#book .hscroll .card[data-dish="quinoa"]').count() === 1 && await page.locator('#book .hscroll .card[data-dish="ricotta"]').count() === 1, '"lange nicht gegessen" remembers old dishes');
     await page.click('#chips [data-f="veg"]');
@@ -321,7 +331,7 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     ok(nd && nd.steps[0].af && nd.steps[0].af.c === 180 && nd.steps[0].af.m === 20 && nd.steps[0].af.sh === 10, 'Cosori step saved', nd && nd.steps);
     const cardSel = `#book .grid .card[data-dish="${newId.split('/')[1]}"]`;
     ok(await page.locator(cardSel).count() === 1 && (await text(page, `${cardSel} .gpill`)) === 'Eigenes', 'card appears with "Eigenes" tag');
-    ok((await attr(page, `${cardSel} img`, 'src')) === 'img/ph-haupt-m.webp' && (await text(page, `${cardSel} .mono`)) === 'G', 'own recipe gets a laid table with its initial');
+    ok((await attr(page, `${cardSel} img`, 'data-name')) === 'ph-haupt' && (await text(page, `${cardSel} .mono`)) === 'G', 'own recipe gets a laid table with its initial');
     await page.click(cardSel);
     await wait(page, 700);
     await page.click('#sheet [data-act="r-edit"]');
@@ -384,9 +394,8 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await wait(page, 500);
     await page.fill('#ckQ', 'Kürbis Ofen');
     ok(await page.getAttribute('#ckGo', 'href') === 'https://www.chefkoch.de/rs/s0/K%C3%BCrbis+Ofen/Rezepte.html', 'import search builds a Chefkoch link', await page.getAttribute('#ckGo', 'href'));
-    await page.click('#sheet [data-act="imp-mode"][data-mode="text"]');
-    await page.fill('#impText', 'Kürbis halbieren, entkernen, in Spalten schneiden. Im Ofen bei 200 Grad 25 Minuten backen. Zutaten: 1 Hokkaido, 2 EL Öl, Salz.');
-    await page.fill('#impUrl', 'https://www.chefkoch.de/rezepte/123456/Ofenkuerbis.html');
+    await page.click('#sheet [data-act="imp-mode"][data-mode="paste"]');
+    await page.fill('#impText', 'Kürbis halbieren, entkernen, in Spalten schneiden. Im Ofen bei 200 Grad 25 Minuten backen. Zutaten: 1 Hokkaido, 2 EL Öl, Salz.\nhttps://www.chefkoch.de/rezepte/123456/Ofenkuerbis.html');
     await page.click('#sheet [data-act="imp-go"]');
     await page.waitForSelector('#dishForm', { timeout: 4000 }).catch(() => {});
     await wait(page, 300);
@@ -412,7 +421,7 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await wait(page, 500);
     await page.click('#sheet [data-act="imp-mode"][data-mode="shots"]');
     await wait(page);
-    await page.setInputFiles('#impFiles', IMG('scan-card-m.webp'));
+    await page.setInputFiles('#impFiles', IMG('scan-card.webp'));
     await wait(page);
     ok(await page.locator('#impThumbs img').count() === 1, 'screenshot preview');
     await page.click('#sheet [data-act="imp-go"]');
@@ -515,9 +524,9 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await wait(page, 400);
     d = await docs(page);
     ok(WD.every((k) => !d['days/' + NEXT[k]]), 'undo copying removes the days again');
-    await page.click('#planNavL [data-act="week-today"]');
+    await page.click('#weekbar [data-act="week-today"]');
     await wait(page, 400);
-    ok((await text(page, '#tPlan')) === 'Diese Woche' && await page.locator('#planNavL [data-act="week-today"]').count() === 0, '"Heute" goes back to this week');
+    ok((await text(page, '#weekbar .wk span')).startsWith('Diese Woche') && await page.locator('#weekbar [data-act="week-today"]').count() === 0, '"Heute" goes back to this week');
 
     console.log('  page errors:', JSON.stringify(errors));
     ok(!errors.length, 'no page errors (A)');
@@ -653,7 +662,9 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     ok(day(d, DAY.mo, 'h').join() === 'risotto', 'drag from the cookbook shelf onto an empty day', d['days/' + DAY.mo]);
     await page.fill('#shelfSearch', 'pizza');
     await wait(page, 200);
-    await page.evaluate((k) => { document.getElementById('day-' + k).scrollIntoView(); }, DAY.mo);
+    // keep the target day away from the edges, where the list would start scrolling
+    await page.evaluate((k) => { document.getElementById('day-' + k).scrollIntoView({ block: 'center' }); }, DAY.mi);
+    await wait(page, 200);
     await drag(page, '#shelfList .shelf-row[data-dish="pizza"]', `${slotSel(DAY.mi, 'h')} .meal[data-dish="tikka"]:not(.is-ghost)`, { yFrac: 0.8, until: [DAY.mi, 'h', 1] });
     d = await docs(page);
     ok(day(d, DAY.mi, 'h').join() === 'tikka,pizza,bolo', 'shelf drop lands at the drop position (between two meals)', d['days/' + DAY.mi]);
@@ -776,7 +787,7 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await page.evaluate(() => { window.__sampleReply = { art: 'nichts', grund: 'nur eine leere Wand' }; });
     await page.click('#v-plan .nav [data-act="scan"]');
     await wait(page, 500);
-    await page.setInputFiles('#scanCam', IMG('ph-leicht-s.webp'));
+    await page.setInputFiles('#scanCam', IMG('ph-leicht.webp'));
     await wait(page, 200);
     const count = Object.keys(await docs(page)).length;
     await page.click('#sheet [data-act="scan-go"]');
@@ -789,6 +800,95 @@ const closeSheet = async (page) => { await page.keyboard.press('Escape'); await 
     await closeSheet(page);
     ok(!errors.length, 'no page errors (E)', errors);
     await ctx.close();
+  }
+
+  console.log('G. recipes from links and screenshots, older apps, photos');
+  {
+    const fs = require('fs');
+    const os = require('os');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'antom-'));
+    const tall = path.join(tmp, 'tall.png');
+    const ready = (async () => {
+      const b = await launch();
+      const pg = await (await b.newContext()).newPage();
+      const png = await pg.evaluate(() => { const c = document.createElement('canvas'); c.width = 600; c.height = 2400; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 600, 2400); g.fillStyle = '#000'; for (let y = 30; y < 2400; y += 40) g.fillText('200 g Mehl, Zeile ' + y, 20, y); return c.toDataURL('image/png').split(',')[1]; });
+      fs.writeFileSync(tall, Buffer.from(png, 'base64'));
+      await b.close();
+    })();
+    await ready;
+    const REPLY = Object.assign({}, RECIPE, { t: 'Kürbissuppe', name: 'Kürbissuppe mit Ingwer' });
+    // an older Claude app: no sample.json, the answer comes as text with a JSON block
+    const OLD_APP = `(() => { const orig = window.claude.use; window.claude.use = async (n) => { const r = await orig(n); if (n === 'sample' && r && !r.__old) { const f = async (p, o) => { window.__lastPrompt = p; window.__lastOpts = o; return { text: 'Gern!\\n\\x60\\x60\\x60json\\n' + JSON.stringify(window.__sampleReply) + '\\n\\x60\\x60\\x60' }; }; f.__old = true; f.limits = r.limits; return f; } return r; }; })();`;
+    for (const variant of ['current', 'old app']) {
+      const { page, errors, ctx } = await newPage(browser, phone, seedScript() + MOCK + SAMPLE_IMAGES + (variant === 'old app' ? OLD_APP : ''));
+      await open(page);
+      await wait(page, 600);
+      await page.evaluate((r) => { window.__sampleReply = r; }, REPLY);
+      await page.click('.tabbar [data-tab="book"]');
+      await page.click('#book .promo [data-act="import"]');
+      await wait(page, 500);
+      await page.click('#sheet [data-act="imp-mode"][data-mode="paste"]');
+      await page.fill('#impText', 'https://www.chefkoch.de/rezepte/1234567890/Kuerbissuppe-mit-Ingwer.html');
+      ok((await text(page, '#impHint')).includes('„Kuerbissuppe mit Ingwer“'), `${variant}: a pasted link is recognised`);
+      await page.click('#sheet [data-act="imp-go"]');
+      await page.waitForSelector('#dishForm', { timeout: 4000 }).catch(() => {});
+      const lp = await page.evaluate(() => window.__lastPrompt || '');
+      ok(await page.locator('#dishForm').count() === 1 && await page.inputValue('#f-src') === 'https://www.chefkoch.de/rezepte/1234567890/Kuerbissuppe-mit-Ingwer.html' && (await page.inputValue('#f-ing')).includes('Hokkaido'), `${variant}: a link alone becomes a recipe`);
+      ok(lp.includes('"Kuerbissuppe mit Ingwer"') && lp.includes('nicht öffnen'), `${variant}: Claude writes it from the name in the link`);
+      await closeSheet(page);
+      await page.click('#book .promo [data-act="import"]');
+      await wait(page, 500);
+      await page.click('#sheet [data-act="imp-mode"][data-mode="shots"]');
+      await page.setInputFiles('#impFiles', tall);
+      await wait(page, 200);
+      await page.click('#sheet [data-act="imp-go"]');
+      await page.waitForSelector('#dishForm', { timeout: 5000 }).catch(() => {});
+      const sent = await page.evaluate(() => (window.__lastOpts && window.__lastOpts.images ? window.__lastOpts.images.map((x) => x.type) : []));
+      ok(sent.length === 3 && sent.every((t) => t === 'image/jpeg') && (await page.evaluate(() => window.__lastPrompt)).includes('von oben nach unten'), `${variant}: a long screenshot goes to Claude in readable pieces`, sent);
+      await closeSheet(page);
+      await page.click('#book .promo [data-act="import"]');
+      await wait(page, 500);
+      await page.click('#sheet [data-act="imp-mode"][data-mode="shots"]');
+      await page.setInputFiles('#impFiles', { name: 'IMG_0001.HEIC', mimeType: 'image/heic', buffer: Buffer.from('0000001866747970686569630000000068656963', 'hex') });
+      await page.click('#sheet [data-act="imp-go"]');
+      await wait(page, 800);
+      ok((await text(page, '#sheet .status')).includes('Bildformat'), `${variant}: an unreadable photo format gets a clear note`);
+      await closeSheet(page);
+      ok(!errors.length, `no page errors (G ${variant})`, errors);
+      await ctx.close();
+    }
+    {
+      const DENY = `(() => { const orig = window.claude.use; window.claude.use = async (n) => { const r = await orig(n); if (n === 'sample' && r && !r.__deny) { r.__deny = true; r.json = async () => { throw { code: 'not_granted', message: 'no' }; }; } return r; }; })();`;
+      const { page, errors, ctx } = await newPage(browser, phone, seedScript() + MOCK + SAMPLE_IMAGES + DENY);
+      await open(page);
+      await wait(page, 600);
+      await page.click('.tabbar [data-tab="book"]');
+      await page.click('#book .promo [data-act="import"]');
+      await wait(page, 500);
+      await page.click('#sheet [data-act="imp-mode"][data-mode="paste"]');
+      await page.fill('#impText', 'Zutaten: 500 g Kartoffeln, 1 Zwiebel. Die Kartoffeln schälen, würfeln und im Ofen goldbraun backen.');
+      await page.click('#sheet [data-act="imp-go"]');
+      await wait(page, 800);
+      ok((await text(page, '#sheet .status')).includes('noch nicht erlaubt') && await page.locator('#sheet [data-act="perm"]').count() === 1, 'not allowed yet: explains it and offers "Claude erlauben"');
+      await page.click('#sheet [data-act="imp-manual"]');
+      await wait(page, 600);
+      ok(await page.locator('#sheet #f-step-0').count() === 1 && (await page.inputValue('#sheet #f-step-0')).includes('Kartoffeln'), 'after a failed import "Selbst eintragen" carries the text into the form');
+      ok(!errors.length, 'no page errors (G denied)', errors);
+      await ctx.close();
+    }
+    {
+      // the photos are part of the page: they show even where no image file can be loaded
+      const { page, ctx } = await newPage(browser, phone, seedScript() + MOCK + SAMPLE_IMAGES);
+      await page.route('**/img/**', (r) => r.abort());
+      await open(page);
+      await wait(page, 900);
+      const okWeek = await page.evaluate(() => { const v = [...document.querySelectorAll('img')].filter((i) => { const r = i.getBoundingClientRect(); return r.width && r.top < innerHeight && r.bottom > 0; }); return v.length > 3 && v.every((i) => i.naturalWidth > 0); });
+      await page.click('.tabbar [data-tab="book"]');
+      await wait(page, 600);
+      const okBook = await page.evaluate(() => { const v = [...document.querySelectorAll('#v-book img')].filter((i) => { const r = i.getBoundingClientRect(); return r.width && r.top < innerHeight && r.bottom > 0; }); return v.length > 3 && v.every((i) => i.naturalWidth > 0); });
+      ok(okWeek && okBook, 'photos show even when the image files cannot be loaded');
+      await ctx.close();
+    }
   }
 
   console.log('F. first start and layout');

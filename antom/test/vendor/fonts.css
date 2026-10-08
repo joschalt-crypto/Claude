@@ -1,0 +1,8 @@
+/* stand-in for the Google Fonts stylesheet the page loads (Fraunces, variable) */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/fraunces/test/fraunces-latin-full-normal.woff2) format('woff2');
+}
