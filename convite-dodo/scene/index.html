@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Convite Dodó 3 anos</title>
+<style>
+  @font-face { font-family: 'GreatVibes'; src: url(fonts/great-vibes-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Dancing'; font-weight: 400; src: url(fonts/dancing-script-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Dancing'; font-weight: 700; src: url(fonts/dancing-script-latin-700-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'PatrickHand'; src: url(fonts/patrick-hand-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Caveat'; font-weight: 700; src: url(fonts/caveat-latin-700-normal.woff2) format('woff2'); }
+
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #efe5d3; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #efe5d3; }
+  .L { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; will-change: transform, opacity; overflow: visible; }
+  .abs { position: absolute; will-change: transform, opacity; }
+  .shadow { filter: drop-shadow(0 7px 7px rgba(58, 40, 22, .32)); }
+
+  .polaroid { width: 250px; height: 330px; background: #fbf8f1; box-sizing: border-box; padding: 14px 14px 0;
+    box-shadow: 0 10px 16px rgba(50, 35, 20, .30), 0 1px 0 rgba(0,0,0,.05); transform-origin: 125px -6px; }
+  .polaroid img { display: block; width: 222px; height: 262px; object-fit: cover; filter: sepia(.12) saturate(1.05) contrast(1.02); }
+  .polaroid .cap { font-family: 'Caveat'; font-weight: 700; color: #a3232b; font-size: 34px; text-align: center; line-height: 52px; }
+  .pin { position: absolute; left: 111px; top: -40px; width: 28px; height: 74px; }
+
+  #cloth { left: 150px; top: 650px; width: 780px; height: 800px; transform-origin: 390px 0; filter: drop-shadow(0 12px 14px rgba(50,35,20,.30)); }
+  #cloth svg.lace { position: absolute; left: -20px; top: 0; width: 820px; height: 830px; }
+  .txt { position: absolute; left: 0; width: 780px; text-align: center; color: #9a1c26; white-space: nowrap;
+    text-shadow: 0 1px 0 #c5474f, 0 2px 0 rgba(90, 10, 15, .35), 0 3px 4px rgba(60, 0, 0, .18); }
+  .stitch { filter: url(#thread); }
+  #t-nome { top: 40px; font-family: 'GreatVibes'; font-size: 196px; line-height: 220px; }
+  #t-idade { top: 252px; font-family: 'Dancing'; font-weight: 700; font-size: 78px; line-height: 90px; }
+  #t-ch1 { top: 418px; font-family: 'Dancing'; font-weight: 400; font-size: 52px; line-height: 62px; }
+  #t-ch2 { top: 478px; font-family: 'Dancing'; font-weight: 400; font-size: 52px; line-height: 62px; }
+  #t-quando { top: 572px; font-family: 'Dancing'; font-weight: 700; font-size: 62px; line-height: 72px; }
+  #t-onde { top: 648px; font-family: 'Dancing'; font-weight: 400; font-size: 50px; line-height: 60px; }
+  #t-heart { position: absolute; left: 330px; top: 350px; width: 120px; height: 60px; }
+
+  .bee { width: 64px; height: 52px; margin: -26px 0 0 -32px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- cut paper: rough edge + grain + soft shadow -->
+    <filter id="paper" x="-8%" y="-8%" width="116%" height="120%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" result="warp"/>
+      <feDisplacementMap in="SourceGraphic" in2="warp" scale="7" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="9" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+      <feComponentTransfer in="mono" result="grain">
+        <feFuncR type="linear" slope="0.38" intercept="0.74"/>
+        <feFuncG type="linear" slope="0.38" intercept="0.74"/>
+        <feFuncB type="linear" slope="0.38" intercept="0.74"/>
+        <feFuncA type="linear" slope="0" intercept="1"/>
+      </feComponentTransfer>
+      <feBlend in="shape" in2="grain" mode="multiply" result="tex"/>
+      <feComposite in="tex" in2="shape" operator="in" result="pap"/>
+      <feDropShadow in="pap" dx="0" dy="6" stdDeviation="6" flood-color="#3b2a18" flood-opacity="0.34"/>
+    </filter>
+    <filter id="paperSoft" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="2" result="warp"/>
+      <feDisplacementMap in="SourceGraphic" in2="warp" scale="5" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+      <feComponentTransfer in="mono" result="grain">
+        <feFuncR type="linear" slope="0.3" intercept="0.8"/>
+        <feFuncG type="linear" slope="0.3" intercept="0.8"/>
+        <feFuncB type="linear" slope="0.3" intercept="0.8"/>
+        <feFuncA type="linear" slope="0" intercept="1"/>
+      </feComponentTransfer>
+      <feBlend in="shape" in2="grain" mode="multiply" result="tex"/>
+      <feComposite in="tex" in2="shape" operator="in" result="pap"/>
+      <feDropShadow in="pap" dx="0" dy="4" stdDeviation="4" flood-color="#3b2a18" flood-opacity="0.28"/>
+    </filter>
+    <filter id="grainOnly" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="11" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+      <feComponentTransfer in="mono" result="grain">
+        <feFuncR type="linear" slope="0.3" intercept="0.78"/>
+        <feFuncG type="linear" slope="0.3" intercept="0.78"/>
+        <feFuncB type="linear" slope="0.3" intercept="0.78"/>
+        <feFuncA type="linear" slope="0" intercept="1"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="grain" mode="multiply" result="tex"/>
+      <feComposite in="tex" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="thread" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9 0.25" numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(32)">
+      <line x1="0" y1="0" x2="0" y2="9" stroke="#2b2a1c" stroke-width="1.3" opacity=".13"/>
+    </pattern>
+    <pattern id="hatch2" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-55)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#1f2b22" stroke-width="1.1" opacity=".16"/>
+    </pattern>
+    <pattern id="grass" width="12" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(6)">
+      <path d="M2 26 Q3 14 1 2 M8 26 Q9 16 7 8" stroke="#33461f" stroke-width="1.4" fill="none" opacity=".2"/>
+    </pattern>
+    <pattern id="bark" width="22" height="60" patternUnits="userSpaceOnUse">
+      <path d="M4 0 Q7 20 3 40 T5 60 M14 0 Q11 25 15 45 T13 60" stroke="#3f2b1b" stroke-width="2" fill="none" opacity=".28"/>
+    </pattern>
+    <pattern id="skyhatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#ffffff" stroke-width="1.4" opacity=".16"/>
+    </pattern>
+    <pattern id="mesh" width="9" height="9" patternUnits="userSpaceOnUse">
+      <circle cx="4.5" cy="4.5" r="1.05" fill="#cdbfa6" opacity=".45"/>
+    </pattern>
+
+    <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#93b0c8"/><stop offset=".55" stop-color="#b6cad6"/><stop offset="1" stop-color="#dfe4dc"/>
+    </linearGradient>
+    <linearGradient id="meadowG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a3b571"/><stop offset=".45" stop-color="#8aa060"/><stop offset="1" stop-color="#6c8648"/>
+    </linearGradient>
+    <linearGradient id="trunkG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6f5139"/><stop offset=".5" stop-color="#94744f"/><stop offset="1" stop-color="#7a5a3f"/>
+    </linearGradient>
+    <radialGradient id="balloonShine" cx=".35" cy=".3" r=".6">
+      <stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+
+
+    <mask id="laceHoles" maskUnits="userSpaceOnUse" x="-40" y="-20" width="900" height="900">
+      <rect x="-40" y="-20" width="900" height="900" fill="#fff"/>
+      <g id="holes" fill="#000"></g>
+    </mask>
+  </defs>
+</svg>
+
+<div id="stage">
+  <svg class="L" id="bg" viewBox="0 0 1080 1920"><rect width="1080" height="1920" fill="#efe5d3" filter="url(#grainOnly)"/></svg>
+
+  <svg class="L" id="sky" viewBox="0 0 1080 1920"><g filter="url(#paper)">
+    <path id="skyPath" fill="url(#skyG)"/><path id="skyPath2" fill="url(#skyhatch)"/>
+    <g opacity=".22" fill="#fff"><ellipse cx="300" cy="420" rx="220" ry="60"/><ellipse cx="800" cy="560" rx="260" ry="70"/><ellipse cx="560" cy="250" rx="180" ry="40"/></g>
+  </g></svg>
+
+  <div id="clouds"></div>
+
+  <svg class="L" id="hills" viewBox="0 0 1080 1920"><g filter="url(#paper)">
+    <path d="M-60 905 C 120 820 300 870 430 835 C 580 795 700 880 830 825 C 940 785 1020 805 1140 790 V 1400 H -60 Z" fill="#a9b98b"/>
+    <path d="M-60 905 C 120 820 300 870 430 835 C 580 795 700 880 830 825 C 940 785 1020 805 1140 790 V 1400 H -60 Z" fill="url(#hatch)"/>
+  </g><g filter="url(#paper)">
+    <path d="M-60 975 C 160 915 330 965 500 925 C 660 888 830 975 1140 915 V 1400 H -60 Z" fill="#94a874"/>
+    <path d="M-60 975 C 160 915 330 965 500 925 C 660 888 830 975 1140 915 V 1400 H -60 Z" fill="url(#hatch)"/>
+  </g></svg>
+
+  <svg class="L" id="pines" viewBox="0 0 1080 1920"><g id="pinesBack" filter="url(#paper)"></g><g id="pinesFront" filter="url(#paper)"></g></svg>
+
+  <svg class="L" id="meadow" viewBox="0 0 1080 1920"><g filter="url(#paper)">
+    <path id="meadowPath" fill="url(#meadowG)"/><path id="meadowPath2" fill="url(#grass)"/>
+  </g></svg>
+
+  <svg class="L" id="treeL" viewBox="0 0 1080 1920"><g filter="url(#paper)">
+    <path id="trunkL" fill="url(#trunkG)"/><path id="trunkL2" fill="url(#bark)"/>
+    <ellipse cx="60" cy="900" rx="16" ry="24" fill="#5b412c" opacity=".7"/><ellipse cx="80" cy="1260" rx="12" ry="18" fill="#5b412c" opacity=".6"/>
+  </g></svg>
+  <svg class="L" id="treeR" viewBox="0 0 1080 1920"><g transform="translate(1080 0) scale(-1 1)" filter="url(#paper)">
+    <path id="trunkR" fill="url(#trunkG)"/><path id="trunkR2" fill="url(#bark)"/>
+    <ellipse cx="70" cy="1050" rx="15" ry="22" fill="#5b412c" opacity=".7"/>
+  </g></svg>
+
+  <div id="leaves"></div>
+
+  <svg class="L" id="rope" viewBox="0 0 1080 1920">
+    <g filter="url(#paperSoft)">
+      <path id="ropeMain" d="M80 640 Q540 760 1000 640" fill="none" stroke="#e2d6bd" stroke-width="8" stroke-linecap="round"/>
+      <path id="ropeTwist" d="M80 640 Q540 760 1000 640" fill="none" stroke="#a8977a" stroke-width="8" stroke-dasharray="3 9" stroke-linecap="butt"/>
+      <g id="knots" fill="none" stroke="#d8cbb0" stroke-width="7">
+        <path d="M58 628 Q80 640 104 628 M58 646 Q80 658 104 646"/>
+        <path d="M976 628 Q1000 640 1022 628 M976 646 Q1000 658 1022 646"/>
+      </g>
+    </g>
+  </svg>
+
+  <div id="polas"></div>
+
+  <img id="hive" class="abs shadow" src="img/hive.png" style="width:210px; transform-origin:105px 6px;">
+  <svg id="hoop" class="abs" viewBox="0 0 270 340" style="left:150px; top:214px; width:270px; height:340px; transform-origin:135px 18px;">
+    <defs><clipPath id="hoopClip"><circle cx="135" cy="200" r="108"/></clipPath></defs>
+    <g filter="url(#paperSoft)">
+      <path d="M135 14 L 128 74 M135 14 L 142 74" stroke="#c4313a" stroke-width="7" stroke-linecap="round"/>
+      <path d="M135 22 C 105 0 92 30 128 26 Z M135 22 C 165 0 178 30 142 26 Z" fill="#c4313a"/>
+      <circle cx="135" cy="200" r="124" fill="#d3ad78"/>
+      <circle cx="135" cy="200" r="124" fill="url(#hatch)"/>
+      <rect x="117" y="62" width="36" height="26" rx="5" fill="#b38b57"/>
+      <rect x="111" y="68" width="48" height="10" rx="4" fill="#9aa3a8"/>
+    </g>
+    <circle cx="135" cy="200" r="112" fill="#fdfaf3"/>
+    <image href="img/foto_hoop.jpg" x="27" y="92" width="216" height="216" clip-path="url(#hoopClip)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="135" cy="200" r="109" fill="none" stroke="#b8925e" stroke-width="5"/>
+    <circle cx="135" cy="200" r="118" fill="none" stroke="#e2c391" stroke-width="3" opacity=".8"/>
+  </svg>
+
+  <div id="cloth" class="abs">
+    <svg class="lace" viewBox="-20 0 820 830" id="laceSvg"></svg>
+    <div id="t-nome" class="txt stitch"></div>
+    <div id="t-idade" class="txt stitch"></div>
+    <svg id="t-heart" viewBox="0 0 120 60">
+      <g fill="none" stroke="#9a1c26" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="7 4">
+        <path d="M60 50 C 36 34 30 16 45 12 C 53 10 58 16 60 22 C 62 16 67 10 75 12 C 90 16 84 34 60 50 Z"/>
+        <path d="M10 46 L 108 14" stroke-dasharray="none"/>
+      </g>
+      <path d="M108 14 L 96 12 L 100 22 Z" fill="#9a1c26"/>
+      <path d="M10 46 l -6 -8 m 6 8 l -10 -1 M16 44 l -6 -8 m 6 8 l -10 -1" stroke="#9a1c26" stroke-width="2.6" fill="none"/>
+    </svg>
+    <div id="t-ch1" class="txt stitch"></div>
+    <div id="t-ch2" class="txt stitch"></div>
+    <div id="t-quando" class="txt stitch"></div>
+    <div id="t-onde" class="txt stitch"></div>
+  </div>
+
+  <img id="friendsL" class="abs shadow" src="img/friends_l.png" style="width:400px; left:4px; top:1400px; transform-origin:200px 100%;">
+  <img id="friendsR" class="abs shadow" src="img/friends_r.png" style="width:380px; left:694px; top:1448px; transform-origin:190px 100%;">
+
+  <svg id="pot" class="abs" viewBox="0 0 240 240" style="left:420px; top:1610px; width:240px; height:240px; transform-origin:120px 240px;">
+    <g filter="url(#paperSoft)">
+      <path d="M52 70 C 20 110 22 190 70 222 C 100 238 140 238 170 222 C 218 190 220 110 188 70 Z" fill="#c7863a"/>
+      <path d="M52 70 C 20 110 22 190 70 222 C 100 238 140 238 170 222 C 218 190 220 110 188 70 Z" fill="url(#hatch)"/>
+      <rect x="44" y="52" width="152" height="28" rx="12" fill="#dba25a"/>
+      <path d="M60 80 C 64 96 74 98 76 84 C 80 104 92 104 94 84 C 100 96 112 98 114 82 L 60 80 Z" fill="#f0b43a"/>
+      <path d="M150 80 C 152 100 164 104 166 84 C 170 94 178 92 180 80 Z" fill="#f0b43a"/>
+      <path d="M66 112 L 176 106 L 180 168 L 70 176 Z" fill="#f6efdc"/>
+    </g>
+    <text x="123" y="153" text-anchor="middle" font-family="PatrickHand" font-size="44" fill="#5a3517" transform="rotate(-3 123 140)">HUNNY</text>
+  </svg>
+
+  <svg class="L" id="grassFront" viewBox="0 0 1080 1920"><g id="blades" filter="url(#paperSoft)"></g></svg>
+
+  <img id="pooh" class="abs" src="img/pooh.png" style="width:236px; left:0; top:0; transform-origin:118px 0; filter: drop-shadow(0 10px 10px rgba(40,30,20,.28));">
+
+  <svg class="L" id="trails" viewBox="0 0 1080 1920" style="pointer-events:none"></svg>
+  <div id="bees"></div>
+</div>
+
+<script src="config.js"></script>
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = id => document.getElementById(id);
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const R = (a, b) => a + (b - a) * rnd();
+
+  // ---------- text ----------
+  const C = window.CONVITE;
+  $('t-nome').textContent = C.nome;
+  $('t-idade').textContent = C.idade;
+  $('t-ch1').textContent = C.chamada1;
+  $('t-ch2').textContent = C.chamada2;
+  $('t-quando').textContent = C.quando;
+  $('t-onde').textContent = C.onde;
+
+  // ---------- sky ----------
+  let sp = 'M-20 -20 H1100 V1150';
+  for (let x = 1100; x > -20; x -= 90) sp += ` A45 45 0 0 1 ${x - 90} 1150`;
+  sp += ' Z';
+  $('skyPath').setAttribute('d', sp); $('skyPath2').setAttribute('d', sp);
+
+  // ---------- clouds ----------
+  const clouds = [
+    { x: 300, y: 300, w: 230, t: .55 }, { x: 760, y: 230, w: 190, t: .7 },
+    { x: 610, y: 470, w: 260, t: .85 }, { x: 250, y: 560, w: 170, t: 1.0 },
+  ];
+  clouds.forEach((c, i) => {
+    const s = el('svg', { class: 'abs', viewBox: '-160 -110 320 180', width: 320, height: 180 });
+    s.style.left = (c.x - 160) + 'px'; s.style.top = (c.y - 110) + 'px';
+    s.style.transformOrigin = '160px 140px';
+    const sc = c.w / 260;
+    const g = el('g', { filter: 'url(#paperSoft)', transform: `scale(${sc})` }, s);
+    const f = '#f8f5ee';
+    el('ellipse', { cx: 0, cy: 22, rx: 125, ry: 30, fill: f }, g);
+    el('circle', { cx: -62, cy: 2, r: 42, fill: f }, g);
+    el('circle', { cx: -8, cy: -22, r: 56, fill: f }, g);
+    el('circle', { cx: 52, cy: -2, r: 44, fill: f }, g);
+    el('circle', { cx: 95, cy: 16, r: 28, fill: f }, g);
+    el('path', { d: 'M-118 34 Q0 58 118 34', stroke: '#c9d3d8', 'stroke-width': 3, fill: 'none' }, g);
+    $('clouds').appendChild(s);
+    c.node = s;
+  });
+
+  // ---------- pines ----------
+  function pine(g, x, base, h, w, fill) {
+    const tiers = 5, pts = [[x, base - h]];
+    for (let i = 1; i <= tiers; i++) {
+      const y = base - h + h * i / tiers, hw = (w / 2) * (0.35 + 0.65 * i / tiers);
+      pts.push([x + hw, y]);
+      if (i < tiers) pts.push([x + hw * 0.45, y - h * 0.035]);
+    }
+    const right = pts.slice(1);
+    const left = right.map(([px, py]) => [2 * x - px, py]).reverse();
+    const all = [pts[0], ...right, [x + w * .12, base + 60], [x - w * .12, base + 60], ...left];
+    const d = 'M' + all.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L') + ' Z';
+    el('path', { d, fill }, g);
+    el('path', { d, fill: 'url(#hatch2)' }, g);
+  }
+  for (let x = -30; x < 1120; x += R(46, 60)) pine($('pinesBack'), x, R(1150, 1175), R(150, 230), R(80, 110), rnd() > .5 ? '#6f8c7b' : '#7c9884');
+  for (let x = -20; x < 1120; x += R(58, 76)) pine($('pinesFront'), x, R(1225, 1250), R(230, 330), R(110, 140), rnd() > .5 ? '#4d6c5f' : '#577667');
+
+  // ---------- meadow ----------
+  let mp = 'M-40 1960 L-40 1200';
+  for (let x = -40; x <= 1120; x += 11) {
+    const base = 1205 + 14 * Math.sin(x / 160);
+    mp += ` L${x + 4} ${(base - R(10, 34)).toFixed(1)} L${x + 11} ${base.toFixed(1)}`;
+  }
+  mp += ' L1120 1960 Z';
+  $('meadowPath').setAttribute('d', mp); $('meadowPath2').setAttribute('d', mp);
+
+  // ---------- trees ----------
+  const trunk = 'M-60 1900 L-60 -60 L66 -60 C 62 120 62 220 70 300 C 150 238 282 168 432 120 L 448 116 ' +
+    'C 300 204 178 288 90 396 C 82 700 78 1100 92 1560 C 98 1680 120 1780 160 1900 L -60 1900 Z';
+  ['trunkL', 'trunkL2', 'trunkR', 'trunkR2'].forEach(id => $(id).setAttribute('d', trunk));
+
+  // ---------- leaves ----------
+  const leafCols = ['#9aa86e', '#85965b', '#b3bb86', '#74874f', '#a7b27a'];
+  const clustersL = [[40, 40], [170, 20], [300, 60], [410, 100], [250, 170], [110, 190], [30, 300], [175, 330], [40, 520], [140, 470], [340, 30], [480, 70]];
+  const leafClusters = [];
+  function cluster(cx, cy, n, r) {
+    const s = el('svg', { class: 'abs', viewBox: `${-r - 60} ${-r - 60} ${2 * r + 120} ${2 * r + 120}`, width: 2 * r + 120, height: 2 * r + 120 });
+    s.style.left = (cx - r - 60) + 'px'; s.style.top = (cy - r - 60) + 'px';
+    s.style.transformOrigin = '50% 50%';
+    const g = el('g', { filter: 'url(#paperSoft)' }, s);
+    for (let i = 0; i < n; i++) {
+      const a = R(0, Math.PI * 2), d = R(0, r), x = Math.cos(a) * d, y = Math.sin(a) * d;
+      const len = R(40, 66), rot = a * 180 / Math.PI + R(-40, 40);
+      const lg = el('g', { transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(1)})` }, g);
+      el('path', { d: `M0 0 C ${len * .3} ${-len * .28} ${len * .7} ${-len * .28} ${len} 0 C ${len * .7} ${len * .28} ${len * .3} ${len * .28} 0 0 Z`, fill: leafCols[Math.floor(R(0, leafCols.length))] }, lg);
+      el('path', { d: `M2 0 L ${len - 6} 0`, stroke: '#5d6b3c', 'stroke-width': 1.4, opacity: .55 }, lg);
+    }
+    $('leaves').appendChild(s);
+    return s;
+  }
+  clustersL.forEach(([x, y], i) => leafClusters.push({ node: cluster(x, y, 13, 62), t: 3.0 + i * 0.05, side: -1 }));
+  clustersL.forEach(([x, y], i) => leafClusters.push({ node: cluster(1080 - x, y, 13, 62), t: 3.08 + i * 0.05, side: 1 }));
+
+  // ---------- polaroids ----------
+  const ropeY = x => { const t = (x - 80) / 920; return 640 + 240 * t * (1 - t); };
+  const fotos = [
+    { src: 'img/foto_spaghetti.jpg', x: 268, rot: -5, t: 4.45, cap: '♡' },
+    { src: 'img/foto_vovo.jpg', x: 540, rot: 2.5, t: 4.95, cap: '♡' },
+    { src: 'img/foto_mae.jpg', x: 812, rot: -2.5, t: 5.45, cap: '♡' },
+  ];
+  const pinSVG = `<svg class="pin" viewBox="0 0 28 74"><g filter="url(#paperSoft)"><rect x="3" y="0" width="10" height="72" rx="3" fill="#d9b98a"/><rect x="15" y="0" width="10" height="72" rx="3" fill="#cfae7d"/><rect x="2" y="32" width="24" height="7" rx="2" fill="#9aa3a8"/></g></svg>`;
+  fotos.forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'polaroid abs';
+    d.style.left = (f.x - 125) + 'px';
+    d.style.top = (ropeY(f.x) + 8) + 'px';
+    d.innerHTML = `<img src="${f.src}"><div class="cap">${f.cap}</div>${pinSVG}`;
+    $('polas').appendChild(d);
+    f.node = d;
+  });
+
+  // ---------- lace cloth ----------
+  (function lace() {
+    const s = $('laceSvg'), W = 780, H = 760;
+    const holes = $('holes');
+    // scallops on left, right, bottom with eyelets
+    let path = `M0 0 H${W}`;
+    const sr = 16;
+    for (let y = 0; y < H; y += 2 * sr) path += ` A${sr} ${sr} 0 0 1 ${W} ${Math.min(y + 2 * sr, H)}`;
+    for (let x = W; x > 0; x -= 2 * sr) path += ` A${sr} ${sr} 0 0 1 ${Math.max(x - 2 * sr, 0)} ${H}`;
+    for (let y = H; y > 0; y -= 2 * sr) path += ` A${sr} ${sr} 0 0 1 0 ${Math.max(y - 2 * sr, 0)}`;
+    path += ' Z';
+    const g = el('g', { mask: 'url(#laceHoles)' }, s);
+    el('path', { d: path, fill: '#fdfaf3', 'fill-opacity': .91 }, g);
+    el('path', { d: path, fill: 'url(#mesh)' }, g);
+    // lace border band
+    el('rect', { x: 26, y: 40, width: W - 52, height: H - 66, fill: 'none', stroke: '#e6dcc8', 'stroke-width': 2, 'stroke-dasharray': '6 5' }, g);
+    el('rect', { x: 36, y: 50, width: W - 72, height: H - 86, fill: 'none', stroke: '#efe6d4', 'stroke-width': 1.5 }, g);
+    for (let x = 16; x < W - 8; x += 26) { el('circle', { cx: x, cy: H - 12, r: 5 }, holes); }
+    for (let y = 60; y < H - 20; y += 26) { el('circle', { cx: 12, cy: y, r: 5 }, holes); el('circle', { cx: W - 12, cy: y, r: 5 }, holes); }
+    for (let x = 30; x < W - 20; x += 52) { el('ellipse', { cx: x + 13, cy: H - 32, rx: 8, ry: 4 }, holes); }
+    // hem at top
+    el('rect', { x: -4, y: 0, width: W + 8, height: 34, fill: '#f3ecdd' }, s);
+    el('line', { x1: 0, y1: 28, x2: W, y2: 28, stroke: '#ddd0b8', 'stroke-width': 2, 'stroke-dasharray': '5 5' }, s);
+    // white embroidered flowers in corners
+    const flower = (cx, cy, r) => {
+      const fg = el('g', { transform: `translate(${cx} ${cy})`, opacity: .9 }, s);
+      for (let i = 0; i < 5; i++) el('ellipse', { cx: 0, cy: -r, rx: r * .45, ry: r * .8, fill: '#fff', stroke: '#e3d8c4', 'stroke-width': 1.2, transform: `rotate(${i * 72})` }, fg);
+      el('circle', { cx: 0, cy: 0, r: r * .35, fill: '#f1e3c4' }, fg);
+    };
+    [[70, 95, 15], [105, 140, 10], [W - 70, 95, 15], [W - 105, 140, 10], [70, H - 90, 13], [W - 70, H - 90, 13]].forEach(a => flower(...a));
+    // vine stitches
+    el('path', { d: `M60 120 Q 90 200 66 280 M${W - 60} 120 Q ${W - 90} 200 ${W - 66} 280`, stroke: '#ece2cf', 'stroke-width': 2.4, fill: 'none', 'stroke-dasharray': '4 3' }, s);
+  })();
+  // clothespins for the cloth
+  ['pinC1', 'pinC2'].forEach((id, i) => {
+    const w = document.createElement('div');
+    w.id = id; w.className = 'abs'; w.innerHTML = pinSVG; w.style.width = '28px'; w.style.height = '74px';
+    w.firstChild.style.left = '0'; w.firstChild.style.top = '0';
+    w.style.left = (i === 0 ? 150 + 60 - 14 : 150 + 720 - 14) + 'px';
+    w.style.top = (ropeY(i === 0 ? 210 : 870) - 34) + 'px';
+    $('cloth').after(w);
+  });
+
+  // ---------- front grass ----------
+  const bladeCols = ['#6f8c4d', '#7f9a58', '#5d7a40', '#8aa462'];
+  for (let i = 0; i < 150; i++) {
+    const x = R(-20, 1100), h = R(50, 150), w = R(10, 22), lean = R(-24, 24);
+    el('path', { d: `M${x - w / 2} 1940 Q ${x + lean * .3} ${1920 - h * .6} ${x + lean} ${1920 - h} Q ${x + lean * .2 + w * .2} ${1920 - h * .5} ${x + w / 2} 1940 Z`, fill: bladeCols[i % 4] }, $('blades'));
+  }
+  [[90, 1860], [230, 1890], [360, 1850], [700, 1880], [880, 1855], [1010, 1890]].forEach(([x, y], i) => {
+    const fg = el('g', { transform: `translate(${x} ${y})` }, $('blades'));
+    for (let k = 0; k < 6; k++) el('ellipse', { cx: 0, cy: -10, rx: 5, ry: 10, fill: i % 2 ? '#f7f1df' : '#f4d76a', transform: `rotate(${k * 60})` }, fg);
+    el('circle', { cx: 0, cy: 0, r: 5, fill: i % 2 ? '#e8b93c' : '#c07a2c' }, fg);
+  });
+
+  // ---------- bees ----------
+  const bees = [
+    { path: 'M-80 900 C 200 700 380 980 560 760 S 760 420 660 470', t0: 7.5, dur: 2.0, hover: [10, 7] },
+    { path: 'M1160 1250 C 900 1150 980 900 760 940 S 300 760 420 560', t0: 7.9, dur: 2.2, hover: [8, 9] },
+    { path: 'M-80 1500 C 150 1380 300 1700 470 1560 S 640 1520 560 1600', t0: 8.4, dur: 1.9, hover: [9, 6] },
+  ];
+  bees.forEach((b, i) => {
+    const mpath = el('path', { d: b.path, fill: 'none' }, $('trails'));
+    const len = mpath.getTotalLength();
+    const dots = el('path', { d: b.path, fill: 'none', stroke: '#3a2c1c', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 13', opacity: .55 }, $('trails'));
+    const maskId = 'beeMask' + i;
+    const m = el('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: -200, y: -200, width: 1500, height: 2400 }, $('trails'));
+    const mp = el('path', { d: b.path, fill: 'none', stroke: '#fff', 'stroke-width': 14, 'stroke-dasharray': `${len} ${len}`, 'stroke-dashoffset': len }, m);
+    dots.setAttribute('mask', `url(#${maskId})`);
+    const d = document.createElement('div');
+    d.className = 'abs';
+    d.innerHTML = `<svg class="bee" viewBox="-32 -26 64 52"><g class="wings">
+        <ellipse cx="-6" cy="-12" rx="11" ry="15" fill="#fbfbf6" fill-opacity=".9" stroke="#7d8a92" stroke-width="1.5" transform="rotate(-25 -6 -12)"/>
+        <ellipse cx="7" cy="-13" rx="10" ry="14" fill="#fbfbf6" fill-opacity=".9" stroke="#7d8a92" stroke-width="1.5" transform="rotate(20 7 -13)"/></g>
+        <ellipse cx="0" cy="4" rx="22" ry="15" fill="#f2c337" stroke="#5a3b10" stroke-width="2"/>
+        <path d="M-7 -10 Q-10 4 -6 18 L-1 18 Q-4 4 -1 -11 Z M5 -10 Q2 4 6 17 L11 15 Q8 4 10 -8 Z" fill="#2c2119"/>
+        <circle cx="-22" cy="2" r="9" fill="#2c2119"/><circle cx="-25" cy="0" r="2.2" fill="#fff"/>
+        <path d="M21 4 L29 6 L21 9 Z" fill="#2c2119"/>
+        <path d="M-26 -6 Q-30 -16 -34 -18 M-22 -8 Q-23 -18 -27 -21" stroke="#2c2119" stroke-width="1.6" fill="none"/></svg>`;
+    b.wings = d.querySelector('.wings');
+    $('bees').appendChild(d);
+    Object.assign(b, { mpath, len, dots, mp, node: d });
+  });
+
+  // ---------- timeline ----------
+  const cl = x => Math.max(0, Math.min(1, x));
+  const P = (t, a, b) => cl((t - a) / (b - a));
+  const outCubic = x => 1 - Math.pow(1 - x, 3);
+  const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const outBack = (x, s = 1.5) => 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2);
+  const swing = (t, t0, amp, f = 1.1, k = 1.6) => t < t0 ? 0 : amp * Math.exp(-k * (t - t0)) * Math.sin(2 * Math.PI * f * (t - t0));
+  const show = (n, v) => { n.style.opacity = v; n.style.visibility = v <= 0.001 ? 'hidden' : 'visible'; };
+  const tf = (n, s) => { n.style.transform = s; };
+
+  window.DURATION = 17.5;
+  window.render = function (t) {
+    // sky slides down
+    { const p = outBack(P(t, 0.05, 0.95), 1.0); tf($('sky'), `translateY(${(-1250 * (1 - p)).toFixed(1)}px)`); }
+    clouds.forEach((c, i) => {
+      const p = P(t, c.t, c.t + .5);
+      show(c.node, p > 0 ? 1 : 0);
+      const drift = Math.sin(t * .35 + i * 1.7) * 14;
+      tf(c.node, `translateX(${drift.toFixed(1)}px) scale(${(0.3 + 0.7 * outBack(p, 2)).toFixed(3)})`);
+    });
+    { const p = outCubic(P(t, 1.0, 1.65)); tf($('hills'), `translateX(${(-1200 * (1 - p)).toFixed(1)}px)`); }
+    { const p = outCubic(P(t, 1.35, 2.0)); tf($('pines'), `translateX(${(1250 * (1 - p)).toFixed(1)}px)`); }
+    { const p = outBack(P(t, 1.8, 2.45), 0.8); tf($('meadow'), `translateY(${(900 * (1 - p)).toFixed(1)}px)`); }
+    { const p = outBack(P(t, 2.35, 3.0), 0.9); tf($('treeL'), `translateX(${(-560 * (1 - p)).toFixed(1)}px)`); }
+    { const p = outBack(P(t, 2.5, 3.15), 0.9); tf($('treeR'), `translateX(${(560 * (1 - p)).toFixed(1)}px)`); }
+    leafClusters.forEach((c, i) => {
+      const p = P(t, c.t, c.t + .45);
+      show(c.node, p > 0 ? 1 : 0);
+      const sway = Math.sin(t * 1.3 + i) * 1.8;
+      tf(c.node, `rotate(${(sway + (1 - p) * 40 * c.side).toFixed(2)}deg) scale(${outBack(p, 2.2).toFixed(3)})`);
+    });
+    // rope draws across
+    { const p = inOut(P(t, 3.55, 4.35)); const L = 900;
+      ['ropeMain', 'ropeTwist'].forEach(id => { const n = $(id); n.style.strokeDasharray = id === 'ropeMain' ? `${L} ${L}` : '3 9'; });
+      $('ropeMain').style.strokeDashoffset = (L * (1 - p)).toFixed(1);
+      $('ropeTwist').style.opacity = p >= 1 ? 1 : 0;
+      $('knots').style.opacity = P(t, 3.6, 3.8);
+      show($('rope'), t >= 3.55 ? 1 : 0); }
+    // polaroids drop + swing
+    fotos.forEach((f, i) => {
+      const p = P(t, f.t, f.t + .45);
+      show(f.node, p > 0 ? 1 : 0);
+      const y = -700 * (1 - outCubic(p));
+      const r = f.rot + swing(t, f.t + .45, 9, 1.0, 1.5) + Math.sin(t * 1.2 + i * 2) * 0.8;
+      tf(f.node, `translateY(${y.toFixed(1)}px) rotate(${r.toFixed(2)}deg)`);
+    });
+    // hive drops from branch
+    { const hv = $('hive'); hv.style.left = '690px'; hv.style.top = '214px';
+      const p = P(t, 6.0, 6.45); show(hv, p > 0 ? 1 : 0);
+      const r = swing(t, 6.45, 10, 0.9, 1.3) + Math.sin(t * 1.1) * 1.2;
+      tf(hv, `translateY(${(-420 * (1 - outCubic(p))).toFixed(1)}px) rotate(${r.toFixed(2)}deg)`); }
+    { const hp = $('hoop'); const p = P(t, 6.2, 6.65); show(hp, p > 0 ? 1 : 0);
+      const r = swing(t, 6.65, 9, 0.85, 1.3) + Math.sin(t * 1.05 + 1) * 1.2;
+      tf(hp, `translateY(${(-560 * (1 - outCubic(p))).toFixed(1)}px) rotate(${r.toFixed(2)}deg)`); }
+    // friends pop up
+    [['friendsL', 6.4], ['friendsR', 6.75]].forEach(([id, t0], i) => {
+      const p = outBack(P(t, t0, t0 + .55), 1.6); const n = $(id);
+      show(n, P(t, t0, t0 + .01));
+      tf(n, `translateY(${(560 * (1 - p)).toFixed(1)}px) rotate(${(swing(t, t0 + .55, 2.5, 1.4, 2.5) + Math.sin(t * .9 + i) * .6).toFixed(2)}deg)`);
+    });
+    { const p = outBack(P(t, 7.0, 7.45), 2.2); const n = $('pot'); show(n, p > 0 ? 1 : 0);
+      tf(n, `scale(${p.toFixed(3)}) rotate(${(swing(t, 7.45, 4, 1.5, 2)).toFixed(2)}deg)`); }
+    { const p = outCubic(P(t, 6.9, 7.45)); tf($('grassFront'), `translateY(${(300 * (1 - p)).toFixed(1)}px)`); }
+
+    // bees
+    bees.forEach((b, i) => {
+      const p = P(t, b.t0, b.t0 + b.dur);
+      show(b.node, p > 0 ? 1 : 0);
+      const e = inOut(p);
+      const L = b.len * e;
+      const pt = b.mpath.getPointAtLength(L);
+      const pt2 = b.mpath.getPointAtLength(Math.min(b.len, L + 2));
+      let ang = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI;
+      let x = pt.x, y = pt.y;
+      const ht = Math.max(0, t - b.t0 - b.dur);
+      const hk = cl(ht / .6);
+      x += Math.sin(t * 2.3 + i * 2) * b.hover[0] * hk; y += Math.cos(t * 3.1 + i) * b.hover[1] * hk;
+      if (p >= 1) ang = (i === 1 ? 180 : 0);
+      const flip = Math.abs(ang) > 90;
+      let rot = flip ? (ang > 0 ? ang - 180 : ang + 180) : ang;
+      rot = Math.max(-35, Math.min(35, rot)) * (1 - hk);
+      const sx = flip ? 1 : -1;
+      const wing = 0.45 + 0.55 * Math.abs(Math.sin(t * 40 + i));
+      tf(b.node, `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scaleX(${sx}) rotate(${(sx === -1 ? -rot : rot).toFixed(1)}deg)`);
+      b.wings.setAttribute('transform', `translate(0 -2) scale(1 ${wing.toFixed(3)}) translate(0 2)`);
+      b.mp.setAttribute('stroke-dashoffset', (b.len * (1 - e)).toFixed(1));
+      b.dots.setAttribute('opacity', (0.55 * (1 - P(t, b.t0 + b.dur + .3, b.t0 + b.dur + 1.2))).toFixed(3));
+    });
+
+    // Pooh floats up with the balloon
+    { const n = $('pooh'); const p = inOut(P(t, 8.1, 11.0)); show(n, P(t, 8.1, 8.15));
+      const x0 = 422, yEnd = 36, yStart = 1960;
+      const y = yStart + (yEnd - yStart) * p + Math.sin(t * 1.6) * 9 * P(t, 10.4, 11.4);
+      const x = x0 + Math.sin(p * Math.PI * 1.5) * 60 * (1 - p) + Math.sin(t * 1.1) * 6;
+      const r = Math.sin(t * 1.3) * 2.5 + (1 - p) * 4;
+      tf(n, `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(2)}deg)`); }
+
+    // cloth drops onto the line, swings, then the text is stitched in
+    { const n = $('cloth'); const p = P(t, 11.2, 11.85); show(n, p > 0 ? 1 : 0);
+      const y = -1500 * (1 - outCubic(p));
+      const r = swing(t, 11.85, 5, 0.9, 1.7) + Math.sin(t * .8) * .35;
+      const sk = swing(t, 11.85, 3, 1.3, 2.2);
+      tf(n, `translateY(${y.toFixed(1)}px) rotate(${r.toFixed(2)}deg) skewX(${sk.toFixed(2)}deg)`);
+      ['pinC1', 'pinC2'].forEach((id, i) => { const q = P(t, 12.05 + i * .12, 12.3 + i * .12); const pn = $(id); show(pn, q > 0 ? 1 : 0);
+        tf(pn, `translateY(${(-60 * (1 - outBack(q, 2))).toFixed(1)}px)`); });
+      const lines = [['t-nome', 12.3, 13.1], ['t-idade', 13.0, 13.55], ['t-heart', 13.45, 13.75], ['t-ch1', 13.65, 14.15], ['t-ch2', 14.0, 14.5], ['t-quando', 14.4, 14.95], ['t-onde', 14.85, 15.35]];
+      lines.forEach(([id, a, b]) => { const q = inOut(P(t, a, b)); $(id).style.clipPath = `inset(-30px ${((1 - q) * 100).toFixed(2)}% -30px -30px)`; });
+    }
+  };
+  window.render(0);
+})();
+</script>
+</body>
+</html>

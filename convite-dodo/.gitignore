@@ -1,0 +1,9 @@
+# Fotos da família, recortes da arte do Pooh e vídeos ficam fora do repositório (repo público)
+scene/img/
+assets/
+*.mp4
+*.mov
+*.wav
+*.jpg
+*.png
+node_modules/
