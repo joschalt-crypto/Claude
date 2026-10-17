@@ -45,6 +45,12 @@ Use `references/prompt-template.md`. Always paste the signature LOOK line unchan
 so every image in a campaign matches.
 Put exact text in quotes, specify serif/italic, keep text short (≤ 3 words per line).
 
+### Credit rule (Fe's preference)
+Think first, generate last. Agree on ONE photo, ONE idea and the final prompt in text
+before spending anything. Don't mix elements from several photos unless Fe asks.
+State the cost and wait for a "yes" before every generation. Generate 1 image (count 1),
+not variants, until the direction is confirmed. Never generate "mood references" on your own.
+
 ### 4. Generate
 - Image: Higgsfield `gpt_image_2_5` (best for text + photorealism), count 2, aspect per brief.
   If a product photo exists, pass it as a reference image so the real product stays accurate.
