@@ -33,6 +33,9 @@ Before starting, read:
 4. Recommend the best 3, one line each on *why* it works. Let Fe pick.
 5. Key phrase: the product sits there **"as if it were one of the [objects around it]"**.
 
+For sales, Black Friday or launches, also read `references/sale-playbook.md`
+(street poster · too much to carry · the sign that says tomorrow · the paperwork).
+
 Also allowed: "hide the product" — rebuild an everyday or retro object (phone, fax, toaster,
 elevator buttons, photo booth) from the product's materials and colours.
 
@@ -62,6 +65,11 @@ Animate the hero image with exactly ONE small movement (a few centimetres), came
 perfectly still; static camera".
 Edit rules: cut dead moments, end on the high point.
 
-### 8. Log it
+### 8. Teaching carousels (Studio Yacy)
+For educational carousels, copy `templates/carousel/carousel.html` (1080×1350, Studio Yacy brand,
+layout after @aluncreative). Change the text, swap the grey frames for real photos, then
+render PNGs with `node templates/carousel/render.mjs`. Each frame's label says which photo goes there.
+
+### 9. Log it
 Append the final prompt to `references/prompt-log.md` with: date, product, idea, model,
 aspect, what worked, what to change next time.
