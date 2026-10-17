@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Studio Yacy carousel</title>
+<!-- Studio Yacy carousel template, 1080×1350 (4:5).
+     Layout after @aluncreative's teaching carousels; colours, type and voice from the Studio Yacy brand book.
+     Grey frames are photo placeholders: swap in real photos or Higgsfield images (label = what goes there).
+     Render to PNG: node render.mjs -->
+<link rel="stylesheet" href="zodiak.css">
+<style>
+  :root{
+    --cream:#F1EFEA; --espresso:#3A2D2D; --dusty:#9BAABE; --ink:#111111;
+    --stone:#6E6A64; --lightstone:#B9B4AC; --frame:#E4E0D8;
+    --serif:Zodiak, Georgia, serif;
+    --sans:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#d9d5cc;font-family:var(--sans);color:var(--ink);
+       display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px 0}
+
+  .slide{width:1080px;height:1350px;background:var(--cream);position:relative;
+         padding:96px 80px 0;display:flex;flex-direction:column;overflow:hidden}
+  .slide.dark{background:var(--espresso);color:var(--cream)}
+
+  /* header: number + headline, then 2–3 plain sentences */
+  .title{font-family:var(--serif);font-style:italic;font-weight:400;
+         font-size:72px;line-height:1.02;letter-spacing:-.01em;color:var(--espresso)}
+  .title .no{font-style:normal;font-family:var(--sans);font-weight:700;font-size:30px;
+             letter-spacing:.12em;display:block;margin-bottom:22px;color:var(--stone)}
+  .body{font-size:36px;line-height:1.3;margin-top:30px;max-width:900px}
+  .body p+p{margin-top:18px}
+
+  /* framed photo grid */
+  .grid{flex:1;display:grid;gap:22px;margin:52px 0 132px}
+  .g2{grid-template-columns:1.25fr 1fr}
+  .g3{grid-template-columns:1.25fr 1fr;grid-template-rows:1fr 1fr}
+  .g3 .ph:first-child{grid-row:1/3}
+  .ph{border:2px solid var(--espresso);background:var(--frame);position:relative;
+      display:flex;align-items:flex-end;padding:22px;min-height:0}
+  .ph span{font-size:21px;line-height:1.3;color:var(--stone);max-width:90%}
+  .ph.low{align-self:end;height:62%}
+  .ph .tag{position:absolute;top:-48px;right:0;font-size:26px;color:var(--ink)}
+
+  /* footer: logo left, page right */
+  .foot{position:absolute;left:80px;right:80px;bottom:56px;display:flex;
+        align-items:center;justify-content:space-between}
+  .foot img{height:74px}
+  .foot .page{font-size:24px;letter-spacing:.14em;color:var(--stone)}
+  .dark .foot .page{color:var(--lightstone)}
+
+  /* cover + closing */
+  .big{font-size:132px;line-height:.98;letter-spacing:-.02em}
+  .big em{font-family:var(--serif);font-weight:400}
+  .big b{font-family:var(--sans);font-weight:700;font-size:.62em;letter-spacing:.04em;
+         text-transform:uppercase;display:inline-block;vertical-align:.12em}
+  .kicker{font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--lightstone)}
+  .cover-body{font-size:38px;line-height:1.3;max-width:820px;color:var(--cream)}
+  .dot{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--dusty);
+       vertical-align:.1em;margin-left:10px}
+
+  /* do / don't */
+  .pairs{margin-top:60px;display:grid;gap:22px}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .pair div{border:2px solid var(--espresso);padding:30px 32px;font-size:32px;line-height:1.25}
+  .pair div:last-child{border-color:var(--lightstone);color:var(--stone);text-decoration:line-through;
+                       text-decoration-color:var(--lightstone)}
+  .pairs .lbl{display:grid;grid-template-columns:1fr 1fr;gap:22px;font-size:22px;
+              letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
+</style>
+</head>
+<body>
+
+<!-- 1 · Cover -->
+<section class="slide dark">
+  <p class="kicker">Black Friday for small shops</p>
+  <h1 class="big" style="margin-top:200px"><em>Your sale is a</em> <b>story.</b><br><em>Not a</em> <b>sticker.</b></h1>
+  <p class="cover-body" style="margin-top:70px">Four ideas for a November post your regulars will actually stop for.</p>
+  <div class="foot"><img src="../../assets/studio-yacy/yacy-logo-cream.svg" alt="Studio Yacy"><span class="page">1/8</span></div>
+</section>
+
+<!-- 2 · Thesis -->
+<section class="slide">
+  <h2 class="title"><span class="no">WHY</span>The sale is the story. Not the sticker.</h2>
+  <div class="body">
+    <p>Every November the same red banner shows up in every feed. 40% off, product on white.</p>
+    <p>The posts people remember show a moment. The price comes second, in the caption.</p>
+  </div>
+  <div class="grid g2">
+    <div class="ph"><span>Your photo: the red "–40%" banner everyone posts</span></div>
+    <div class="ph"><span>Your photo: the same product, told as a moment</span></div>
+  </div>
+  <div class="foot"><img src="../../assets/studio-yacy/yacy-logo.svg" alt="Studio Yacy"><span class="page">2/8</span></div>
+</section>
+
+<!-- 3 · Idea 1 -->
+<section class="slide">
+  <h2 class="title"><span class="no">01</span>The tram-stop poster.</h2>
+  <div class="body"><p>Print your offer like a lost-cat poster. Your product, the dates, tear-off tabs at the bottom. Tape it where your regulars walk.</p></div>
+  <div class="grid g2">
+    <div class="ph"><span>Poster taped to a Basel tram stop, product half photo, half pencil sketch, tear-off date tabs</span></div>
+    <div class="ph low"><b class="tag">The product</b><span>Plain photo of the product</span></div>
+  </div>
+  <div class="foot"><img src="../../assets/studio-yacy/yacy-logo.svg" alt="Studio Yacy"><span class="page">3/8</span></div>
+</section>
+
+<!-- 4 · Idea 2 -->
+<section class="slide">
+  <h2 class="title"><span class="no">02</span>Too much to carry.</h2>
+  <div class="body"><p>A cargo bike full of your paper bags. A stack of boxes taller than you. Your logo is the only text. The offer goes in the caption.</p></div>
+  <div class="grid g3">
+    <div class="ph"><span>Cargo bike basket overflowing with the shop's paper bags, old-town street</span></div>
+    <div class="ph"><span>Boxes stacked higher than the person carrying them</span></div>
+    <div class="ph"><span>One bag so big it hides her</span></div>
+  </div>
+  <div class="foot"><img src="../../assets/studio-yacy/yacy-logo.svg" alt="Studio Yacy"><span class="page">4/8</span></div>
+</section>
+
+<!-- 5 · Idea 3 -->
+<section class="slide">
+  <h2 class="title"><span class="no">03</span>The sign that says tomorrow.</h2>
+  <div class="body"><p>The day before, post one sheet with almost nothing on it. A sketch on a hanger, a date in a drawer. People come back to see what it was.</p></div>
+  <div class="grid g2">
+    <div class="ph"><span>Pencil sketch of the product clipped to a hanger, studio window light</span></div>
+    <div class="ph low"><span>A date card in a half-open drawer</span></div>
+  </div>
+  <div class="foot"><img src="../../assets/studio-yacy/yacy-logo.svg" alt="Studio Yacy"><span class="page">5/8</span></div>
+</section>
+
+<!-- 6 · Idea 4 -->
+<section class="slide">
+  <h2 class="title"><span class="no">04</span>The paperwork.</h2>
+  <div class="body"><p>A receipt printer that prints the date. A note in the shop window. A letter through a neighbour's door. Small props, a big feeling.</p></div>
+  <div class="grid g3">
+    <div class="ph"><span>Receipt printer on the counter, a long curl of paper with the sale dates</span></div>
+    <div class="ph"><span>Handwritten note taped inside the shop window</span></div>
+    <div class="ph"><span>Envelope with the shop's logo in a letterbox</span></div>
+  </div>
+  <div class="foot"><img src="../../assets/studio-yacy/yacy-logo.svg" alt="Studio Yacy"><span class="page">6/8</span></div>
+</section>
+
+<!-- 7 · How to say it -->
+<section class="slide">
+  <h2 class="title"><span class="no">AND</span>Honest dates. Calm words.</h2>
+  <div class="body"><p>Your regulars trust you. Keep it that way.</p></div>
+  <div class="pairs">
+    <div class="lbl"><span>Write</span><span>Not</span></div>
+    <div class="pair"><div>From Thursday. While it lasts.</div><div>Only 3 left! Hurry!</div></div>
+    <div class="pair"><div>Ab Donnerstag.</div><div>Letzte Chance!!!</div></div>
+    <div class="pair"><div>Which one would you gift?</div><div>Best deal of the year!</div></div>
+  </div>
+  <div class="foot"><img src="../../assets/studio-yacy/yacy-logo.svg" alt="Studio Yacy"><span class="page">7/8</span></div>
+</section>
+
+<!-- 8 · Closing -->
+<section class="slide dark">
+  <p class="kicker">Studio Yacy · Basel</p>
+  <h2 class="big" style="margin-top:200px;font-size:118px"><em>Which one fits</em><br><b>your shop?</b></h2>
+  <p class="cover-body" style="margin-top:70px">We plan it with you in October, so November stays calm.</p>
+  <p class="cover-body" style="margin-top:28px">Say hello. Schreib uns.<span class="dot"></span></p>
+  <div class="foot"><img src="../../assets/studio-yacy/yacy-logo-cream.svg" alt="Studio Yacy"><span class="page">@studio.yacy</span></div>
+</section>
+
+</body>
+</html>
