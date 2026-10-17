@@ -13,6 +13,9 @@ Before starting, read:
 - `references/style-guide.md` — the look (always apply it)
 - `references/prompt-template.md` — the 6-part prompt structure
 - `references/prompt-log.md` — past prompts and what worked; match Fe's taste from it
+- `references/studio-yacy-brand.md` — **for any Studio Yacy post**: services, voice, colours,
+  type and logo rules. It overrides the general style guide. Never let AI draw the logo:
+  leave empty space and place the real file from `assets/studio-yacy/` afterwards.
 
 ## Workflow
 

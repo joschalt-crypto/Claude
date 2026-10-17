@@ -12,3 +12,13 @@ Newest at the bottom. Read before writing new prompts to match Fe's taste.
 - **What worked:** exactly the direction Fe wants.
 - **Next time:** use Fe's real Instax mini 70 photo as reference; add the real Yassi logo; check text spelling.
 - **Series ideas not yet made:** room-service silver cloche reveal · dry-cleaner bag on a hanger · jewellery box on velvet · vintage photo booth strip.
+
+---
+
+## 2026-10-17 — Studio Yacy services intro — chess "All the pieces."
+- **Idea:** chess = strategy. On Fe's own chess set, white pieces are swapped for studio objects from Fe's photos (camera = king, tulip bud = queen, espresso cup = rook).
+- **Model:** Higgsfield gpt_image_2_5 · 4:5 · 2 variants · 0.25 credits each
+- **v1 (off-brand):** pastel palette, AI-drawn "STUDIO YACY" text, tagline "all the pieces you need" with no full stop.
+- **v2 (on-brand):** cream and espresso palette with one dusty-blue accent; blank card for the real logo; headline "All the pieces."
+- **Lesson:** for Studio Yacy, always read studio-yacy-brand.md first. Never let AI draw the logo.
+- **Caption (brand voice):** All the pieces. In one place. / Your look, your posts, a plan you can keep. / We're new in Basel and taking on our first shops. Which piece is missing in yours? / *Alle Teile. An einem Ort. Welches fehlt bei dir?*
